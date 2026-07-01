@@ -28,8 +28,15 @@ def test_render_tool_serves_page_and_restricts_paths(tmp_path, monkeypatch):
     assert "Scaled Dot-Product Attention" in body
 
     base = url.rsplit("/e/", 1)[0]
-    # Not under /e/  -> 404
-    for bad in ("/secret.html", "/e/other.txt", "/e/"):
+
+    # The library index is written by render() and served.
+    with urllib.request.urlopen(base + "/index.json", timeout=5) as r:
+        assert r.status == 200
+        index = json.loads(r.read().decode("utf-8"))
+    assert any(e["slug"] == "scaled-dot-product-attention" for e in index["explanations"])
+
+    # Not under /e/ and not the index -> 404
+    for bad in ("/secret.html", "/e/other.txt", "/e/", "/other.json"):
         try:
             urllib.request.urlopen(base + bad, timeout=5)
             raise AssertionError(f"expected 404 for {bad}")

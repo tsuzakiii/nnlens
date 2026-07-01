@@ -20,7 +20,7 @@ _lock = threading.Lock()
 _server: socketserver.TCPServer | None = None
 _port: int | None = None
 
-_ALLOWED = re.compile(r"^/e/[A-Za-z0-9_.\-]+\.html$")
+_ALLOWED = re.compile(r"^/(?:e/[A-Za-z0-9_.\-]+\.html|index\.json)$")
 
 
 class _Handler(http.server.SimpleHTTPRequestHandler):

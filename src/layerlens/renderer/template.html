@@ -15,12 +15,18 @@
   body { margin: 0; color: var(--fg); background: var(--bg);
     font-family: -apple-system, "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
     line-height: 1.7; }
-  .layout { display: grid; grid-template-columns: 14% minmax(0, 1fr); gap: 0; }
+  .layout { display: grid; grid-template-columns: clamp(220px, 16%, 340px) minmax(0, 1fr); gap: 0; }
   nav.side { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
     border-right: 1px solid var(--border); padding: 1.25rem 1rem; background: var(--panel); font-size: 0.9rem; }
   nav.side h1 { font-size: 15px; margin: 0 0 12px; }
-  nav.side a { display: block; color: var(--fg); text-decoration: none; padding: 3px 6px; border-radius: 6px; }
+  nav.side a { display: block; color: var(--fg); text-decoration: none; padding: 4px 8px; border-radius: 6px; line-height: 1.35; }
   nav.side a:hover { background: #eaeef2; }
+  nav.side .lib-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase;
+    letter-spacing: .05em; margin: 6px 8px 4px; }
+  nav.side a.lib { font-weight: 600; margin-top: 2px; }
+  nav.side a.lib.current { color: var(--accent); background: #eef4ff; }
+  nav.side a.sub { padding-left: 22px; font-size: 0.85rem; color: var(--muted); font-weight: 400; }
+  nav.side a.sub:hover { color: var(--fg); }
   main { padding: 2rem 4% 8rem; }
   header.doc { border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
   header.doc h1 { margin: 0 0 6px; font-size: 28px; }

@@ -13,7 +13,7 @@ from mcp.server.fastmcp import FastMCP
 from . import config, sources
 from .models import Explanation
 from .prompts import EXPLAIN_PROMPT
-from .renderer import ensure_server, write_explanation
+from .renderer import ensure_server, update_index, write_explanation
 from .sandbox import run_python as _run_python
 
 mcp = FastMCP("layerlens")
@@ -70,6 +70,7 @@ def render(explanation: dict) -> dict:
         return {"error": "validation_failed", "detail": str(exc)}
     store = config.store_dir()
     path = write_explanation(ex.model_dump(), store, ex.slug())
+    update_index(store, ex.slug(), ex.title, ex.kind)
     port = ensure_server(store, start_port=config.start_port())
     return {
         "url": f"http://127.0.0.1:{port}/e/{ex.slug()}.html",

@@ -33,3 +33,26 @@ def write_explanation(explanation: dict, store_dir: str, slug: str) -> str:
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(build_html(explanation))
     return path
+
+
+def update_index(store_dir: str, slug: str, title: str, kind: str) -> None:
+    """Maintain ``<store_dir>/index.json`` listing every rendered explanation.
+
+    The sidebar fetches this to show a library of all explanations, so each new
+    render makes the whole set navigable from any page.
+    """
+    path = os.path.join(store_dir, "index.json")
+    data: dict = {"explanations": []}
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8") as f:
+                loaded = json.load(f)
+            if isinstance(loaded, dict) and isinstance(loaded.get("explanations"), list):
+                data = loaded
+        except Exception:  # noqa: BLE001 — a corrupt index shouldn't break rendering
+            data = {"explanations": []}
+    exps = [e for e in data["explanations"] if isinstance(e, dict) and e.get("slug") != slug]
+    exps.append({"slug": slug, "title": title, "kind": kind})
+    exps.sort(key=lambda e: (e.get("title") or "").lower())
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({"explanations": exps}, f, ensure_ascii=False, indent=2)

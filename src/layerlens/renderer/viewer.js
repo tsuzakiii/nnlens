@@ -254,14 +254,49 @@
     return sec;
   }
 
-  function buildTOC(doc, comps) {
+  function currentSlug() {
+    const file = (typeof location !== "undefined" ? location.pathname : "").split("/").pop() || "";
+    return file.replace(/\.html$/, "");
+  }
+
+  function renderLibrary(doc, DATA, list) {
     const toc = doc.getElementById("toc");
-    comps.forEach((c, i) => {
-      const a = doc.createElement("a");
-      a.href = "#c-" + (c.id || i);
-      a.textContent = c.name;
+    toc.textContent = "";
+    const label = el(doc, "div", "lib-label");
+    label.textContent = "ライブラリ";
+    toc.appendChild(label);
+    const slug = currentSlug();
+    list.forEach((it) => {
+      const isCurrent = it.current || it.slug === slug;
+      const a = el(doc, "a", "lib" + (isCurrent ? " current" : ""));
+      a.href = isCurrent ? "#" : "./" + encodeURIComponent(it.slug) + ".html";
+      a.textContent = it.title || it.slug;
       toc.appendChild(a);
+      if (isCurrent) {
+        (DATA.components || []).forEach((c, i) => {
+          const sa = el(doc, "a", "sub");
+          sa.href = "#c-" + (c.id || i);
+          sa.textContent = c.name;
+          toc.appendChild(sa);
+        });
+      }
     });
+  }
+
+  // Show the current explanation immediately; when served over http, pull the full
+  // library (index.json) so every generated explanation appears in the sidebar.
+  function buildLibrary(doc, DATA) {
+    const slug = currentSlug() || DATA.id || "";
+    renderLibrary(doc, DATA, [{ slug: slug, title: DATA.title, kind: DATA.kind, current: true }]);
+    if (typeof fetch !== "function" || (typeof location !== "undefined" && location.protocol === "file:")) return;
+    fetch("../index.json", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.explanations) && data.explanations.length) {
+          renderLibrary(doc, DATA, data.explanations);
+        }
+      })
+      .catch(() => {});
   }
 
   function attachTooltips(doc, ledgerMap) {
@@ -311,7 +346,7 @@
     const m = doc.getElementById("main");
     m.appendChild(header);
     (DATA.components || []).forEach((c, i) => m.appendChild(renderComponent(doc, md, c, i, ledgerMap)));
-    buildTOC(doc, DATA.components || []);
+    buildLibrary(doc, DATA);
 
     // syntax highlight
     if (typeof hljs !== "undefined") {

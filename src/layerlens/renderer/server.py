@@ -1,23 +1,27 @@
 """A tiny background server for rendered explanations + the library index.
 
 Serves only:
-  - ``GET /e/<slug>.html``     — a rendered explanation (static file)
-  - ``GET /index.json``        — the library, rebuilt from disk on every request
-  - ``DELETE /e/<slug>.html``  — remove an explanation (file + index entry)
+  - ``GET/HEAD /e/<slug>.html``  — a rendered explanation (static file)
+  - ``GET/HEAD /index.json``     — the library (static; rebuilt from disk at start
+                                    and on each render/delete, never on GET)
+  - ``DELETE /e/<slug>.html``    — remove an explanation (file + index entry)
 
-Everything else 404s, directory listings are disabled, and it binds to 127.0.0.1
-only. DELETE is a non-simple method, so browsers preflight it cross-origin; since
-the server sends no CORS approval, only the layerlens page (same origin) can delete.
+Hardening:
+  - binds to 127.0.0.1 only, disables directory listings, 404s everything else;
+  - validates the ``Host`` header is loopback (defeats DNS-rebinding, since a
+    rebound hostname won't match) and, for DELETE, rejects non-loopback ``Origin``;
+  - GET is read-only (no filesystem writes), so a cross-site GET can't drive disk
+    churn.
 """
 
 from __future__ import annotations
 
 import functools
 import http.server
-import json
 import re
 import socketserver
 import threading
+from urllib.parse import urlsplit
 
 from .build import delete_explanation, reconcile_index
 
@@ -25,32 +29,59 @@ _lock = threading.Lock()
 _server: socketserver.TCPServer | None = None
 _port: int | None = None
 
+_ALLOWED = re.compile(r"^/(?:e/[A-Za-z0-9_.\-]+\.html|index\.json)$")
 _E_HTML = re.compile(r"^/e/([A-Za-z0-9_.\-]+)\.html$")
-_INDEX = "/index.json"
+_LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
+
+
+def _hostname_of(value: str) -> str:
+    try:
+        return (urlsplit("//" + value).hostname or "").lower()
+    except ValueError:
+        return ""
+
+
+def _origin_hostname(value: str) -> str:
+    try:
+        return (urlsplit(value).hostname or "").lower()
+    except ValueError:
+        return ""
 
 
 class _Handler(http.server.SimpleHTTPRequestHandler):
     def _path(self) -> str:
         return self.path.split("?", 1)[0].split("#", 1)[0]
 
+    def _host_ok(self) -> bool:
+        # Defeats DNS rebinding: only requests addressed to a loopback host pass.
+        return _hostname_of(self.headers.get("Host", "")) in _LOCAL_HOSTS
+
     def do_GET(self):  # noqa: N802
-        path = self._path()
-        if path == _INDEX:
-            self._serve_index()
+        if not self._host_ok():
+            self.send_error(403)
             return
-        if not _E_HTML.match(path):
+        if not _ALLOWED.match(self._path()):
             self.send_error(404)
             return
         super().do_GET()
 
     def do_HEAD(self):  # noqa: N802
-        path = self._path()
-        if path == _INDEX or _E_HTML.match(path):
-            super().do_HEAD()
+        if not self._host_ok():
+            self.send_error(403)
             return
-        self.send_error(404)
+        if not _ALLOWED.match(self._path()):
+            self.send_error(404)
+            return
+        super().do_HEAD()
 
     def do_DELETE(self):  # noqa: N802
+        if not self._host_ok():
+            self.send_error(403)
+            return
+        origin = self.headers.get("Origin")
+        if origin and _origin_hostname(origin) not in _LOCAL_HOSTS:
+            self.send_error(403)
+            return
         match = _E_HTML.match(self._path())
         if not match:
             self.send_error(404)
@@ -63,19 +94,6 @@ class _Handler(http.server.SimpleHTTPRequestHandler):
         self.send_response(204)
         self.end_headers()
 
-    def _serve_index(self):
-        try:
-            entries = reconcile_index(self.directory)
-        except Exception:  # noqa: BLE001
-            entries = []
-        body = json.dumps({"explanations": entries}, ensure_ascii=False).encode("utf-8")
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Cache-Control", "no-store")
-        self.end_headers()
-        self.wfile.write(body)
-
     def list_directory(self, path):  # never list directories
         self.send_error(404)
         return None
@@ -85,11 +103,19 @@ class _Handler(http.server.SimpleHTTPRequestHandler):
 
 
 def ensure_server(store_dir: str, start_port: int = 8787, tries: int = 64) -> int:
-    """Ensure the server is serving ``store_dir``; return its port (idempotent)."""
+    """Ensure the server is serving ``store_dir``; return its port (idempotent).
+
+    Reconciles the index from disk once at startup so every existing explanation
+    (including ones rendered before/elsewhere) is listed without a GET-time write.
+    """
     global _server, _port
     with _lock:
         if _server is not None:
             return _port  # type: ignore[return-value]
+        try:
+            reconcile_index(store_dir)
+        except Exception:  # noqa: BLE001 — never let a bad index block serving
+            pass
         handler = functools.partial(_Handler, directory=store_dir)
         port = start_port
         last_err: Exception | None = None

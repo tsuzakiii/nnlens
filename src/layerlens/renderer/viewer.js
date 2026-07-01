@@ -338,7 +338,7 @@
   }
 
   if (typeof module !== "undefined" && module.exports) {
-    module.exports = { escHtml, safeHref, createMd, renderProseHTML, wrapTerms };
+    module.exports = { escHtml, safeHref, createMd, renderProseHTML, wrapTerms, renderComponent };
   } else if (typeof document !== "undefined") {
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", main);
     else main();

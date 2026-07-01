@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# layerlens local render store
+.layerlens/
+*.rendered.html
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# tests
+.pytest_cache/
+.coverage
+tests/js/node_modules/
+tests/js/package-lock.json

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>layerlens</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css" />
+<style>
+  :root {
+    --fg: #1f2328; --muted: #656d76; --bg: #ffffff; --panel: #f6f8fa;
+    --border: #d0d7de; --accent: #0969da; --term: #8250df;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--fg); background: var(--bg);
+    font-family: -apple-system, "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+    line-height: 1.7; }
+  .layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 0; }
+  nav.side { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
+    border-right: 1px solid var(--border); padding: 20px 16px; background: var(--panel); font-size: 14px; }
+  nav.side h1 { font-size: 15px; margin: 0 0 12px; }
+  nav.side a { display: block; color: var(--fg); text-decoration: none; padding: 3px 6px; border-radius: 6px; }
+  nav.side a:hover { background: #eaeef2; }
+  main { padding: 32px 40px 120px; max-width: 900px; }
+  header.doc { border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
+  header.doc h1 { margin: 0 0 6px; font-size: 28px; }
+  header.doc .src a { color: var(--accent); text-decoration: none; margin-right: 14px; font-size: 14px; }
+  .kind { display: inline-block; font-size: 12px; color: var(--muted); border: 1px solid var(--border);
+    border-radius: 999px; padding: 1px 10px; margin-left: 8px; vertical-align: middle; }
+  section.component { margin: 40px 0; }
+  section.component > h2 { font-size: 22px; border-bottom: 2px solid var(--fg); padding-bottom: 4px; }
+  .view { margin: 22px 0; }
+  .view > h3 { font-size: 16px; color: var(--fg); display: flex; align-items: baseline; gap: 8px; }
+  .view > h3 .num { display: inline-flex; width: 24px; height: 24px; align-items: center; justify-content: center;
+    background: var(--fg); color: #fff; border-radius: 6px; font-size: 13px; }
+  .note { color: var(--muted); font-size: 14px; }
+  pre { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px;
+    overflow-x: auto; font-size: 13.5px; }
+  pre code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+  .prose :not(pre) > code { background: var(--panel); border: 1px solid var(--border); border-radius: 5px;
+    padding: 1px 5px; font-size: 90%; }
+  .mermaid { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }
+  .mermaid.diagram-error::after { content: "（この構造図は描画できませんでした）"; color: var(--muted); font-size: 13px; }
+  table.ledger { border-collapse: collapse; width: 100%; font-size: 14px; margin: 10px 0; }
+  table.ledger th, table.ledger td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+  table.ledger th { background: var(--panel); }
+  .term { color: var(--term); border-bottom: 1px dashed var(--term); cursor: help; }
+  .run { border-left: 3px solid var(--accent); background: #f0f6ff; padding: 8px 12px; border-radius: 0 8px 8px 0;
+    font-size: 13px; margin-top: 8px; }
+  .run.fail { border-left-color: #cf222e; background: #fff0f0; }
+  .run pre { background: transparent; border: none; padding: 4px 0; margin: 4px 0 0; }
+  .badge { font-size: 12px; padding: 1px 8px; border-radius: 999px; }
+  .badge.ok { background: #dafbe1; color: #1a7f37; } .badge.fail { background: #ffebe9; color: #cf222e; }
+  #tooltip { position: fixed; z-index: 50; max-width: 320px; background: #1f2328; color: #fff; padding: 8px 12px;
+    border-radius: 8px; font-size: 13px; line-height: 1.5; pointer-events: none; opacity: 0; transition: opacity .1s;
+    box-shadow: 0 4px 16px rgba(0,0,0,.25); }
+  #tooltip .sym { color: #ffd; font-weight: 600; }
+  .src-link { font-size: 13px; }
+  .src-link a { color: var(--accent); }
+</style>
+</head>
+<body>
+<script type="application/json" id="data">__LAYERLENS_DATA__</script>
+<div id="tooltip"></div>
+<div class="layout">
+  <nav class="side"><h1>layerlens</h1><div id="toc"></div></nav>
+  <main id="main"></main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/markdown-it-texmath@1.0.0/texmath.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<script>__LAYERLENS_JS__</script>
+</body>
+</html>

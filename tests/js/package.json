@@ -1,0 +1,16 @@
+{
+  "name": "layerlens-viewer-tests",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Headless tests for the layerlens viewer JS (renderProse / wrapTerms / safeHref).",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.0",
+    "katex": "^0.16.11",
+    "markdown-it": "^14.1.0",
+    "markdown-it-texmath": "1.0.0"
+  }
+}

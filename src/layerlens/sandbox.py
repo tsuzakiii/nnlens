@@ -20,6 +20,7 @@ networked/filesystem side effects are possible.
 from __future__ import annotations
 
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -28,6 +29,28 @@ import threading
 
 STDOUT_CAP = 8000
 STDERR_CAP = 4000
+
+
+def _python_interpreter() -> str:
+    """Return a real Python interpreter to run snippets with.
+
+    When layerlens is launched via its console-script wrapper (``layerlens.exe``),
+    ``sys.executable`` is that wrapper, NOT an interpreter — running ``[sys.executable,
+    snippet]`` would re-launch the MCP server (which hangs on stdio) and every snippet
+    would "time out". So if ``sys.executable`` isn't a python binary, recover the real
+    interpreter from the (venv) prefix.
+    """
+    exe = sys.executable or ""
+    if os.path.basename(exe).lower().startswith("python"):
+        return exe
+    names = ("python.exe", "pythonw.exe") if os.name == "nt" else ("python3", "python")
+    subdir = "Scripts" if os.name == "nt" else "bin"
+    for root in (sys.prefix, getattr(sys, "base_prefix", sys.prefix)):
+        for name in names:
+            for cand in (os.path.join(root, subdir, name), os.path.join(root, name)):
+                if os.path.isfile(cand):
+                    return cand
+    return shutil.which("python3") or shutil.which("python") or exe
 
 
 def _drain(stream, cap: int, out: list[str]) -> None:
@@ -76,6 +99,9 @@ def run_python(code: str, timeout: float = 15.0) -> dict:
             fh.write(code)
 
         kwargs: dict = dict(
+            stdin=subprocess.DEVNULL,  # never inherit the parent's stdin: when layerlens
+            # runs over an MCP stdio pipe, an inherited pipe stdin deadlocks the child on
+            # Windows (even trivial `print(2+2)` would "time out"). Snippets don't read stdin.
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=d,
@@ -89,7 +115,7 @@ def run_python(code: str, timeout: float = 15.0) -> dict:
         else:
             kwargs["start_new_session"] = True
 
-        proc = subprocess.Popen([sys.executable, path], **kwargs)
+        proc = subprocess.Popen([_python_interpreter(), path], **kwargs)
         out: list[str] = []
         err: list[str] = []
         t_out = threading.Thread(target=_drain, args=(proc.stdout, STDOUT_CAP, out), daemon=True)

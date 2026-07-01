@@ -20,6 +20,21 @@ _ATOM = "{http://www.w3.org/2005/Atom}"
 # new-style: 1706.03762 / 1706.03762v3 ; old-style: hep-th/9711200, math.AG/0309136
 _OLD_ID = re.compile(r"[a-z-]+(?:\.[A-Z]{2})?/\d{7}", re.I)
 _NEW_ID = re.compile(r"\d{4}\.\d{4,5}(?:v\d+)?")
+_GH = re.compile(r"https?://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
+
+
+def _extract_repos(text: str) -> list[str]:
+    """Pull github.com/owner/repo URLs out of free text (abstracts, links)."""
+    return [m.rstrip(".,);:]") for m in _GH.findall(text or "")]
+
+
+def _dedupe(items: list[str]) -> list[str]:
+    seen, out = set(), []
+    for x in items:
+        if x not in seen:
+            seen.add(x)
+            out.append(x)
+    return out
 
 
 def _get(url: str, headers: dict | None = None, timeout: int = _TIMEOUT) -> str:
@@ -71,7 +86,16 @@ def fetch_paper(query: str) -> dict:
         node = entry.find(_ATOM + tag)
         return re.sub(r"\s+", " ", node.text).strip() if node is not None and node.text else ""
 
-    return {"title": text("title"), "summary": text("summary"), "url": text("id"), "query": query}
+    title, summary, url = text("title"), text("summary"), text("id")
+    # Papers usually link their official code in the abstract (and sometimes in a
+    # <link>). Surfacing these lets the host build view 5 from the *real* repo even
+    # when find_official_repo would be defeated by a name collision (e.g. "PRISM").
+    repos = _extract_repos(title + " " + summary)
+    for link in entry.findall(_ATOM + "link"):
+        href = link.get("href", "")
+        if "github.com" in href:
+            repos.extend(_extract_repos(href))
+    return {"title": title, "summary": summary, "url": url, "repos": _dedupe(repos), "query": query}
 
 
 def find_official_repo(name: str) -> dict:

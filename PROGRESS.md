@@ -52,8 +52,14 @@ subscription (host does inference; server = tools + methodology + renderer).
 - [ ] Naming + PyPI availability before publishing ("layerlens" is a working name).
 - [ ] Open design Q: Codex-as-MCP-client support for ChatGPT-sub users (Claude hosts are solid).
 
+## Done (this session, cont. 4) — real-usage feedback + visual polish
+- [x] **Bug (from real use): `run_python` hung on trivial `print(2+2)` over MCP stdio.** Root-caused empirically (not `sys.executable` — the child inherited the parent's MCP-pipe stdin and deadlocked on Windows). Fix: spawn snippets with `stdin=DEVNULL`. Added an **E2E regression test** (`tests/test_mcp_stdio.py`) that launches the server over real stdio (normal pytest can't reproduce it). Also added a defensive `_python_interpreter()` resolver.
+- [x] **`fetch_paper` now surfaces `repos`** (github URLs from the abstract/links) so view 5 survives find_official_repo name collisions (e.g. PRISM → gpr-prism/prism).
+- [x] **Renderer full-width**: dropped `main { max-width: 900px }` → content uses the whole window (was wasting ~40% on wide screens). Verified visually via Playwright (before/after screenshots): Mermaid, KaTeX, syntax highlight, term hover, run badge, source link all render correctly.
+- [x] Feature scoping: in-page "Claude toolbox" (select-to-explain / revise) researched (workflow) — MCP sampling unsupported by Desktop/Code today; only viable via a separate warm-`claude`-CLI daemon. User declined the feature for now.
+
 ## Verified state
-- Tests: 16 Python + 8 Node/jsdom, all green. Codex reviewed twice (14 findings, all fixed). Wheel installs and renders.
+- Tests: 17 Python + 8 Node/jsdom, all green. Codex reviewed twice (14 findings, all fixed). Wheel installs and renders. Rendered page visually verified in-browser.
 
 ## Known limitations (documented, not blockers)
 - Browser visual of mermaid/katex not yet eyeballed (profile locked all session); graceful fallback implemented.

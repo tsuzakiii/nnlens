@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
+import threading
 from pathlib import Path
 
 _TEMPLATE = Path(__file__).with_name("template.html")
+_index_lock = threading.Lock()
 _VIEWER = Path(__file__).with_name("viewer.js")
 _DATA_TOKEN = "__LAYERLENS_DATA__"
 _JS_TOKEN = "__LAYERLENS_JS__"
@@ -35,24 +38,60 @@ def write_explanation(explanation: dict, store_dir: str, slug: str) -> str:
     return path
 
 
+def _clean_entry(entry: object) -> dict | None:
+    """Normalize one index entry; return None if it isn't a usable record."""
+    if not isinstance(entry, dict):
+        return None
+    slug = entry.get("slug")
+    if not isinstance(slug, str) or not slug:
+        return None
+    title = entry.get("title")
+    kind = entry.get("kind")
+    return {
+        "slug": slug,
+        "title": title if isinstance(title, str) else slug,
+        "kind": kind if isinstance(kind, str) else "",
+    }
+
+
 def update_index(store_dir: str, slug: str, title: str, kind: str) -> None:
     """Maintain ``<store_dir>/index.json`` listing every rendered explanation.
 
     The sidebar fetches this to show a library of all explanations, so each new
     render makes the whole set navigable from any page.
+
+    Concurrency: a process-wide lock serializes read-modify-write, and the file is
+    replaced atomically (temp file + ``os.replace``) so a concurrent reader/render
+    never sees a truncated/partial index. Across separate processes sharing one
+    store the update is best-effort last-writer-wins (self-heals on re-render), but
+    never corrupt.
     """
     path = os.path.join(store_dir, "index.json")
-    data: dict = {"explanations": []}
-    if os.path.exists(path):
+    entry = _clean_entry({"slug": slug, "title": title, "kind": kind})
+    if entry is None:  # slug is always a non-empty str in practice, but be safe
+        return
+    with _index_lock:
+        entries: list[dict] = []
+        if os.path.exists(path):
+            try:
+                with open(path, encoding="utf-8") as f:
+                    loaded = json.load(f)
+                if isinstance(loaded, dict) and isinstance(loaded.get("explanations"), list):
+                    entries = [c for c in (_clean_entry(e) for e in loaded["explanations"]) if c]
+            except Exception:  # noqa: BLE001 — a corrupt index shouldn't break rendering
+                entries = []
+        entries = [e for e in entries if e["slug"] != slug]
+        entries.append(entry)
+        entries.sort(key=lambda e: e["title"].lower())
+
+        fd, tmp = tempfile.mkstemp(dir=store_dir, prefix=".index-", suffix=".json")
         try:
-            with open(path, encoding="utf-8") as f:
-                loaded = json.load(f)
-            if isinstance(loaded, dict) and isinstance(loaded.get("explanations"), list):
-                data = loaded
-        except Exception:  # noqa: BLE001 — a corrupt index shouldn't break rendering
-            data = {"explanations": []}
-    exps = [e for e in data["explanations"] if isinstance(e, dict) and e.get("slug") != slug]
-    exps.append({"slug": slug, "title": title, "kind": kind})
-    exps.sort(key=lambda e: (e.get("title") or "").lower())
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump({"explanations": exps}, f, ensure_ascii=False, indent=2)
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump({"explanations": entries}, f, ensure_ascii=False, indent=2)
+            os.replace(tmp, path)
+        except Exception:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise

@@ -45,3 +45,16 @@ def test_update_index_survives_corrupt_file(tmp_path):
     update_index(str(tmp_path), "a", "Alpha", "technique")
     data = json.loads((tmp_path / "index.json").read_text(encoding="utf-8"))
     assert [e["slug"] for e in data["explanations"]] == ["a"]
+
+
+def test_update_index_normalizes_bad_entries(tmp_path):
+    # Valid JSON but malformed entry (title is a dict, kind is an int) must not crash.
+    (tmp_path / "index.json").write_text(
+        json.dumps({"explanations": [{"slug": "x", "title": {}, "kind": 3}]}), encoding="utf-8"
+    )
+    update_index(str(tmp_path), "y", "Why", "technique")
+    data = json.loads((tmp_path / "index.json").read_text(encoding="utf-8"))
+    by = {e["slug"]: e for e in data["explanations"]}
+    assert set(by) == {"x", "y"}
+    assert by["x"]["title"] == "x"  # bad title coerced to slug fallback
+    assert isinstance(by["x"]["kind"], str)

@@ -292,9 +292,14 @@
     fetch("../index.json", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data && Array.isArray(data.explanations) && data.explanations.length) {
-          renderLibrary(doc, DATA, data.explanations);
+        if (!data || !Array.isArray(data.explanations) || !data.explanations.length) return;
+        let list = data.explanations;
+        const slug = currentSlug() || DATA.id || "";
+        // If the index is stale and lacks the current page, keep it visible/highlighted.
+        if (!list.some((e) => e && e.slug === slug)) {
+          list = list.concat([{ slug: slug, title: DATA.title, kind: DATA.kind, current: true }]);
         }
+        renderLibrary(doc, DATA, list);
       })
       .catch(() => {});
   }

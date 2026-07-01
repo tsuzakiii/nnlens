@@ -57,6 +57,21 @@
   #tooltip .sym { color: #ffd; font-weight: 600; }
   .src-link { font-size: 13px; }
   .src-link a { color: var(--accent); }
+
+  /* responsive: content shrinks to fit; nothing gets clipped off the right */
+  img, svg { max-width: 100%; }
+  .mermaid svg { max-width: 100%; height: auto; }
+  pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .katex-display { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
+  .prose, .src-link a, nav.side a, table.ledger td, table.ledger th { overflow-wrap: anywhere; }
+
+  /* narrow windows: stack the sidebar on top instead of squeezing it thin */
+  @media (max-width: 720px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.side { position: static; height: auto; overflow: visible;
+      border-right: none; border-bottom: 1px solid var(--border); }
+    main { padding: 1.5rem 5% 6rem; }
+  }
 </style>
 </head>
 <body>

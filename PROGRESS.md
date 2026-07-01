@@ -40,9 +40,20 @@ subscription (host does inference; server = tools + methodology + renderer).
 - [x] Caught+fixed independently: markdown-it-texmath sets no browser global → createMd probes the bare `texmath` identifier (else math would render as raw `$...$` in a real browser).
 - [x] Regression tests added (link/image policy, unicode slug, arxiv id variants). Python 14 + JS 6 all green.
 
-## Next (this session)
-- [ ] Commit clean (local only; no push without ask).
-- [ ] Retry browser visual when the browser-scenario profile frees (only the mermaid/katex *visual* is unconfirmed; logic verified headlessly).
+## Done (this session, cont. 3)
+- [x] Runtime integration tests: render() serves over HTTP (200+content), static server 404s outside /e/<slug>.html, invalid explanation -> validation error. (16 Python tests)
+- [x] renderComponent assembly test via jsdom (5 views, ledger, badges, term wiring, safe link). (8 JS tests)
+- [x] Built wheel; verified template.html + viewer.js are packaged; fresh-install smoke test renders + MCP imports. `pip install` claim holds.
+- [x] 3 local commits (no push).
+
+## Needs the user / external (can't do autonomously)
+- [ ] Browser *visual* of mermaid/katex: browser-scenario profile stayed locked all session. Logic verified headlessly; retry when it frees.
+- [ ] End-to-end host-driven run: needs the user's own MCP host (Claude Desktop / Claude Code) — add layerlens, run /explain, confirm the round-trip.
+- [ ] Naming + PyPI availability before publishing ("layerlens" is a working name).
+- [ ] Open design Q: Codex-as-MCP-client support for ChatGPT-sub users (Claude hosts are solid).
+
+## Verified state
+- Tests: 16 Python + 8 Node/jsdom, all green. Codex reviewed twice (14 findings, all fixed). Wheel installs and renders.
 
 ## Known limitations (documented, not blockers)
 - Browser visual of mermaid/katex not yet eyeballed (profile locked all session); graceful fallback implemented.

@@ -2,7 +2,13 @@ import json
 from pathlib import Path
 
 from layerlens.models import Explanation
-from layerlens.renderer import build_html, update_index, write_explanation
+from layerlens.renderer import (
+    build_html,
+    delete_explanation,
+    reconcile_index,
+    update_index,
+    write_explanation,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -45,6 +51,34 @@ def test_update_index_survives_corrupt_file(tmp_path):
     update_index(str(tmp_path), "a", "Alpha", "technique")
     data = json.loads((tmp_path / "index.json").read_text(encoding="utf-8"))
     assert [e["slug"] for e in data["explanations"]] == ["a"]
+
+
+def test_reconcile_index_picks_up_disk_files(tmp_path):
+    # A rendered file with no index entry must still appear (metadata read from HTML).
+    ex = Explanation.model_validate(_example())
+    write_explanation(ex.model_dump(), str(tmp_path), ex.slug())
+    entries = reconcile_index(str(tmp_path))
+    entry = next(e for e in entries if e["slug"] == ex.slug())
+    assert entry["title"] == ex.title
+    assert entry["kind"] == ex.kind
+
+
+def test_reconcile_index_drops_missing_then_delete(tmp_path):
+    ex = Explanation.model_validate(_example())
+    write_explanation(ex.model_dump(), str(tmp_path), ex.slug())
+    update_index(str(tmp_path), ex.slug(), ex.title, ex.kind)
+    update_index(str(tmp_path), "ghost", "Ghost", "technique")  # index entry with no file
+    slugs = [e["slug"] for e in reconcile_index(str(tmp_path))]
+    assert "ghost" not in slugs and ex.slug() in slugs
+
+    assert delete_explanation(str(tmp_path), ex.slug()) is True
+    assert not (tmp_path / "e" / f"{ex.slug()}.html").exists()
+    assert ex.slug() not in [e["slug"] for e in reconcile_index(str(tmp_path))]
+
+
+def test_delete_explanation_rejects_traversal(tmp_path):
+    assert delete_explanation(str(tmp_path), "../secret") is False
+    assert delete_explanation(str(tmp_path), "a/b") is False
 
 
 def test_update_index_normalizes_bad_entries(tmp_path):

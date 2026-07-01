@@ -259,6 +259,19 @@
     return file.replace(/\.html$/, "");
   }
 
+  // Management (delete) is only possible when served over http, not for a file:// page.
+  function canManage() {
+    return typeof fetch === "function" && !(typeof location !== "undefined" && location.protocol === "file:");
+  }
+
+  function withCurrent(list, DATA) {
+    const slug = currentSlug() || DATA.id || "";
+    if (!list.some((e) => e && e.slug === slug)) {
+      return list.concat([{ slug: slug, title: DATA.title, kind: DATA.kind, current: true }]);
+    }
+    return list;
+  }
+
   function renderLibrary(doc, DATA, list) {
     const toc = doc.getElementById("toc");
     toc.textContent = "";
@@ -266,12 +279,27 @@
     label.textContent = "ライブラリ";
     toc.appendChild(label);
     const slug = currentSlug();
+    const manage = canManage();
     list.forEach((it) => {
       const isCurrent = it.current || it.slug === slug;
+      const row = el(doc, "div", "lib-row");
       const a = el(doc, "a", "lib" + (isCurrent ? " current" : ""));
       a.href = isCurrent ? "#" : "./" + encodeURIComponent(it.slug) + ".html";
       a.textContent = it.title || it.slug;
-      toc.appendChild(a);
+      row.appendChild(a);
+      if (manage) {
+        const del = el(doc, "button", "del");
+        del.type = "button";
+        del.title = "削除";
+        del.textContent = "✕";
+        del.addEventListener("click", (ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          deleteEntry(doc, DATA, it.slug, it.title || it.slug, isCurrent);
+        });
+        row.appendChild(del);
+      }
+      toc.appendChild(row);
       if (isCurrent) {
         (DATA.components || []).forEach((c, i) => {
           const sa = el(doc, "a", "sub");
@@ -283,25 +311,40 @@
     });
   }
 
+  function refreshLibrary(doc, DATA) {
+    return fetch("../index.json", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data || !Array.isArray(data.explanations)) return;
+        renderLibrary(doc, DATA, withCurrent(data.explanations, DATA));
+      })
+      .catch(() => {});
+  }
+
+  function deleteEntry(doc, DATA, slug, title, isCurrent) {
+    if (!window.confirm("「" + title + "」を削除しますか？（ファイルも消えます）")) return;
+    fetch("./" + encodeURIComponent(slug) + ".html", { method: "DELETE" })
+      .then((r) => {
+        if (!(r.ok || r.status === 204)) throw new Error("delete failed");
+        if (!isCurrent) return refreshLibrary(doc, DATA);
+        // Deleting the page you're on: jump to another explanation, or reload if none left.
+        return fetch("../index.json", { cache: "no-store" })
+          .then((x) => (x.ok ? x.json() : { explanations: [] }))
+          .then((data) => {
+            const others = (data.explanations || []).filter((e) => e && e.slug !== slug);
+            if (others.length) location.href = "./" + encodeURIComponent(others[0].slug) + ".html";
+            else location.reload();
+          });
+      })
+      .catch(() => window.alert("削除に失敗しました"));
+  }
+
   // Show the current explanation immediately; when served over http, pull the full
-  // library (index.json) so every generated explanation appears in the sidebar.
+  // library (index.json, rebuilt from disk) so every explanation appears in the sidebar.
   function buildLibrary(doc, DATA) {
     const slug = currentSlug() || DATA.id || "";
     renderLibrary(doc, DATA, [{ slug: slug, title: DATA.title, kind: DATA.kind, current: true }]);
-    if (typeof fetch !== "function" || (typeof location !== "undefined" && location.protocol === "file:")) return;
-    fetch("../index.json", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (!data || !Array.isArray(data.explanations) || !data.explanations.length) return;
-        let list = data.explanations;
-        const slug = currentSlug() || DATA.id || "";
-        // If the index is stale and lacks the current page, keep it visible/highlighted.
-        if (!list.some((e) => e && e.slug === slug)) {
-          list = list.concat([{ slug: slug, title: DATA.title, kind: DATA.kind, current: true }]);
-        }
-        renderLibrary(doc, DATA, list);
-      })
-      .catch(() => {});
+    if (canManage()) refreshLibrary(doc, DATA);
   }
 
   function attachTooltips(doc, ledgerMap) {

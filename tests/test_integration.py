@@ -43,6 +43,19 @@ def test_render_tool_serves_page_and_restricts_paths(tmp_path, monkeypatch):
         except urllib.error.HTTPError as exc:
             assert exc.code == 404, f"{bad} -> {exc.code}"
 
+    # DELETE removes the file and drops it from the (disk-reconciled) index.
+    slug = url.rsplit("/e/", 1)[1].split("?", 1)[0][:-5]
+    with urllib.request.urlopen(urllib.request.Request(url, method="DELETE"), timeout=5) as r:
+        assert r.status == 204
+    with urllib.request.urlopen(base + "/index.json", timeout=5) as r:
+        after = json.loads(r.read().decode("utf-8"))
+    assert all(e["slug"] != slug for e in after["explanations"])
+    try:
+        urllib.request.urlopen(url, timeout=5)
+        raise AssertionError("expected 404 after delete")
+    except urllib.error.HTTPError as exc:
+        assert exc.code == 404
+
 
 def test_render_rejects_invalid_explanation(monkeypatch, tmp_path):
     monkeypatch.setenv("LAYERLENS_STORE", str(tmp_path))

@@ -27,6 +27,12 @@
   nav.side a.lib.current { color: var(--accent); background: #eef4ff; }
   nav.side a.sub { padding-left: 22px; font-size: 0.85rem; color: var(--muted); font-weight: 400; }
   nav.side a.sub:hover { color: var(--fg); }
+  nav.side .lib-row { display: flex; align-items: center; }
+  nav.side .lib-row a.lib { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  nav.side .del { visibility: hidden; border: none; background: none; color: var(--muted);
+    cursor: pointer; font-size: 12px; line-height: 1; padding: 2px 6px; border-radius: 6px; }
+  nav.side .lib-row:hover .del { visibility: visible; }
+  nav.side .del:hover { background: #ffebe9; color: #cf222e; }
   main { padding: 2rem 4% 8rem; }
   header.doc { border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }
   header.doc h1 { margin: 0 0 6px; font-size: 28px; }

@@ -23,7 +23,7 @@ import socketserver
 import threading
 from urllib.parse import urlsplit
 
-from .build import delete_explanation, reconcile_index
+from .build import delete_explanation, rebuild_store, reconcile_index
 
 _lock = threading.Lock()
 _server: socketserver.TCPServer | None = None
@@ -112,9 +112,16 @@ def ensure_server(store_dir: str, start_port: int = 8787, tries: int = 64) -> in
     with _lock:
         if _server is not None:
             return _port  # type: ignore[return-value]
+        # Refresh pages rendered by an older template (pages inline their CSS/JS,
+        # so this is the only way fixes reach them), then the index. Separate
+        # guards: a rebuild failure must not also skip index reconciliation.
+        try:
+            rebuild_store(store_dir)
+        except Exception:  # noqa: BLE001 — never let a bad store block serving
+            pass
         try:
             reconcile_index(store_dir)
-        except Exception:  # noqa: BLE001 — never let a bad index block serving
+        except Exception:  # noqa: BLE001
             pass
         handler = functools.partial(_Handler, directory=store_dir)
         port = start_port

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -9,13 +10,29 @@ import tempfile
 import threading
 from pathlib import Path
 
+from ..models import Explanation
+
 _TEMPLATE = Path(__file__).with_name("template.html")
 _VIEWER = Path(__file__).with_name("viewer.js")
 _DATA_TOKEN = "__LAYERLENS_DATA__"
 _JS_TOKEN = "__LAYERLENS_JS__"
+_TPL_TOKEN = "__LAYERLENS_TPLHASH__"
 
 _index_lock = threading.Lock()
 _DATA_RE = re.compile(r'<script type="application/json" id="data">(.*?)</script>', re.S)
+_TPLHASH_RE = re.compile(r'<meta name="layerlens-template" content="([0-9a-f]+)"')
+
+
+def template_hash() -> str:
+    """Fingerprint of the current template + viewer, baked into every page.
+
+    Pages are self-contained (CSS/JS inlined), so template fixes don't reach
+    already-rendered files; this hash is how ``rebuild_store`` detects them.
+    """
+    h = hashlib.sha1()
+    h.update(_TEMPLATE.read_bytes())
+    h.update(_VIEWER.read_bytes())
+    return h.hexdigest()[:16]
 
 
 def build_html(explanation: dict) -> str:
@@ -23,7 +40,7 @@ def build_html(explanation: dict) -> str:
     template = _TEMPLATE.read_text(encoding="utf-8")
     viewer_js = _VIEWER.read_text(encoding="utf-8")
     # Inline the viewer script first (trusted, no tokens of its own), then the data.
-    html = template.replace(_JS_TOKEN, viewer_js)
+    html = template.replace(_JS_TOKEN, viewer_js).replace(_TPL_TOKEN, template_hash())
     # Embed as JSON in a <script type="application/json"> tag parsed by JSON.parse.
     # The only sequence that could break out of that context is "</" (e.g. an
     # embedded "</script>"), so escape just that.
@@ -32,13 +49,96 @@ def build_html(explanation: dict) -> str:
 
 
 def write_explanation(explanation: dict, store_dir: str, slug: str) -> str:
-    """Write ``<store_dir>/e/<slug>.html`` and return the file path."""
+    """Write ``<store_dir>/e/<slug>.html`` atomically and return the file path."""
     out_dir = os.path.join(store_dir, "e")
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, f"{slug}.html")
-    with open(path, "w", encoding="utf-8") as fh:
-        fh.write(build_html(explanation))
+    # temp + os.replace so a concurrent reader (another process serving the same
+    # store) never sees a truncated page. Fixed short prefix: deriving it from the
+    # slug could push a valid filename past Windows path limits.
+    fd, tmp = tempfile.mkstemp(dir=out_dir, prefix=".layerlens-", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(build_html(explanation))
+        os.replace(tmp, path)
+    except Exception:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
     return path
+
+
+def rebuild_store(store_dir: str, force: bool = False) -> dict:
+    """Re-render stored pages whose baked-in template differs from the current one.
+
+    Pages inline their CSS/JS, so a template/viewer fix would otherwise never reach
+    already-generated files (they'd stay on the old layout forever). Each page
+    embeds its full Explanation JSON, so it can be re-rendered losslessly. Pages
+    whose payload doesn't validate against the current schema are left untouched.
+
+    Returns ``{"rebuilt": [...], "fresh": [...], "skipped": [...]}`` (slugs).
+    """
+    e_dir = os.path.join(store_dir, "e")
+    result: dict = {"rebuilt": [], "fresh": [], "skipped": []}
+    if not os.path.isdir(e_dir):
+        return result
+    current = template_hash()
+    for name in sorted(os.listdir(e_dir)):
+        if not name.endswith(".html"):
+            continue
+        slug = name[:-5]
+        path = os.path.join(e_dir, name)
+        if not force:
+            try:
+                m = _TPLHASH_RE.search(Path(path).read_text(encoding="utf-8"))
+            except OSError:
+                result["skipped"].append(slug)
+                continue
+            if m and m.group(1) == current:
+                result["fresh"].append(slug)
+                continue
+        try:
+            before = os.stat(path).st_mtime_ns
+            ex = Explanation.model_validate(_read_meta(path))
+        except Exception:  # noqa: BLE001 — unparseable/legacy/vanished page: leave it alone
+            result["skipped"].append(slug)
+            continue
+        # Keep the filename's slug (the page's URL), not ex.slug(), so links stay
+        # stable. A per-page failure must not abort the rest of the rebuild.
+        try:
+            if _replace_if_unchanged(path, before, build_html(ex.model_dump())):
+                update_index(store_dir, slug, ex.title, ex.kind)
+                result["rebuilt"].append(slug)
+            else:
+                result["skipped"].append(slug)
+        except Exception:  # noqa: BLE001
+            result["skipped"].append(slug)
+    return result
+
+
+def _replace_if_unchanged(path: str, mtime_ns: int, content: str) -> bool:
+    """Atomically replace ``path`` with ``content`` unless it changed since ``mtime_ns``.
+
+    A concurrent render may replace a page between the rebuild's read and write;
+    fresh renders always win over rebuilds, so we bail out (False) if the file's
+    mtime moved. (A narrow stat->replace window remains — acceptable, since a lost
+    rebuild self-heals on the next server start.)
+    """
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".layerlens-", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(content)
+        if os.stat(path).st_mtime_ns != mtime_ns:
+            return False
+        os.replace(tmp, path)
+        return True
+    finally:
+        try:
+            os.unlink(tmp)  # no-op after a successful replace
+        except OSError:
+            pass
 
 
 # --- library index --------------------------------------------------------

@@ -5,7 +5,9 @@ from layerlens.models import Explanation
 from layerlens.renderer import (
     build_html,
     delete_explanation,
+    rebuild_store,
     reconcile_index,
+    template_hash,
     update_index,
     write_explanation,
 )
@@ -87,6 +89,48 @@ def test_reconcile_index_drops_missing_then_delete(tmp_path):
 def test_delete_explanation_rejects_traversal(tmp_path):
     assert delete_explanation(str(tmp_path), "../secret") is False
     assert delete_explanation(str(tmp_path), "a/b") is False
+
+
+def test_pages_carry_the_template_hash():
+    html = build_html(_example())
+    assert f'<meta name="layerlens-template" content="{template_hash()}"' in html
+
+
+def test_rebuild_store_refreshes_legacy_pages(tmp_path):
+    ex = Explanation.model_validate(_example())
+    path = Path(write_explanation(ex.model_dump(), str(tmp_path), ex.slug()))
+    # Simulate a page rendered before hash-stamping existed (like real legacy pages).
+    legacy = path.read_text(encoding="utf-8").replace(
+        f'<meta name="layerlens-template" content="{template_hash()}" />', ""
+    )
+    path.write_text(legacy, encoding="utf-8")
+
+    res = rebuild_store(str(tmp_path))
+    assert ex.slug() in res["rebuilt"]
+    rebuilt = path.read_text(encoding="utf-8")
+    assert template_hash() in rebuilt, "page now stamped with the current template"
+    assert ex.title in rebuilt, "content survived the round-trip"
+    # Rebuilt pages also land in the index.
+    data = json.loads((tmp_path / "index.json").read_text(encoding="utf-8"))
+    assert any(e["slug"] == ex.slug() for e in data["explanations"])
+
+    # Second pass: everything is fresh, nothing rebuilt.
+    res2 = rebuild_store(str(tmp_path))
+    assert res2["rebuilt"] == [] and ex.slug() in res2["fresh"]
+
+    # force=True re-renders even fresh pages.
+    res3 = rebuild_store(str(tmp_path), force=True)
+    assert ex.slug() in res3["rebuilt"]
+
+
+def test_rebuild_store_skips_unparseable_pages(tmp_path):
+    e_dir = tmp_path / "e"
+    e_dir.mkdir()
+    junk = e_dir / "junk.html"
+    junk.write_text("<!doctype html><p>not a layerlens page</p>", encoding="utf-8")
+    res = rebuild_store(str(tmp_path))
+    assert "junk" in res["skipped"]
+    assert junk.read_text(encoding="utf-8").endswith("</p>"), "file left untouched"
 
 
 def test_index_drops_unservable_slugs(tmp_path):

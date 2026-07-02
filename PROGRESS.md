@@ -65,8 +65,14 @@ subscription (host does inference; server = tools + methodology + renderer).
 - [x] Codex review #4 (4 findings, all fixed): prototype-pollution-safe slug map (Object.create(null)+hasOwnProperty), upgradeLinks reconciles in BOTH directions (deleted target downgrades a live link), slug allowlist unified with the server URL regex across RelatedRef/isSafeSlug/_clean_entry, list_library never raises. No XSS path found.
 - [x] Verified in-browser: attention↔layer-norm mutual chips click through both ways.
 
+## Done (2026-07-02, cont.) — template updates now reach old pages
+- [x] Pages are stamped with a template hash (`<meta name="layerlens-template">`; sha1 of template.html+viewer.js).
+- [x] `rebuild_store`: pages whose stamp differs (or is missing = legacy) are re-rendered losslessly from their embedded Explanation JSON; unparseable pages skipped untouched. Runs automatically at `ensure_server` startup.
+- [x] Proven on the real store: the PRISM page (stuck on the old max-width:900px CSS) auto-upgraded to the current layout + wikilink viewer on server restart.
+- [x] `write_explanation` atomic (temp+os.replace). Codex review #5 (2 findings, fixed): renders win over rebuilds via mtime guard (`_replace_if_unchanged`), fixed short temp prefix (Windows path limits), per-page failure isolation, rebuild/reconcile guarded separately at startup.
+
 ## Verified state
-- Tests: 42 Python + 16 Node/jsdom, all green. Codex reviewed 4 times (18 findings, all fixed). Wheel installs and renders. Rendered page + cross-links visually verified in-browser.
+- Tests: 45 Python + 16 Node/jsdom, all green. Codex reviewed 5 times (20 findings, all fixed). Wheel installs and renders. Rendered page + cross-links visually verified in-browser; legacy-page auto-rebuild verified on the real store.
 
 ## Known limitations (documented, not blockers)
 - Browser visual of mermaid/katex not yet eyeballed (profile locked all session); graceful fallback implemented.

@@ -58,8 +58,15 @@ subscription (host does inference; server = tools + methodology + renderer).
 - [x] **Renderer full-width**: dropped `main { max-width: 900px }` → content uses the whole window (was wasting ~40% on wide screens). Verified visually via Playwright (before/after screenshots): Mermaid, KaTeX, syntax highlight, term hover, run badge, source link all render correctly.
 - [x] Feature scoping: in-page "Claude toolbox" (select-to-explain / revise) researched (workflow) — MCP sampling unsupported by Desktop/Code today; only viable via a separate warm-`claude`-CLI daemon. User declined the feature for now.
 
+## Done (2026-07-02) — cross-links between explanations
+- [x] Design doc `docs/DESIGN_related_links.md`; implemented by a Sonnet-5(high) subagent, reviewed + hardened here.
+- [x] `Explanation.related` (RelatedRef: slug/label/relation×4) + `[[slug|text]]` wikilinks in prose; header chips; two-stage pending→link/missing upgrade against the library index (missing = 「まだ生成されていません」= what to generate next).
+- [x] New MCP tool `list_library` so the host knows existing slugs before linking; prompt updated.
+- [x] Codex review #4 (4 findings, all fixed): prototype-pollution-safe slug map (Object.create(null)+hasOwnProperty), upgradeLinks reconciles in BOTH directions (deleted target downgrades a live link), slug allowlist unified with the server URL regex across RelatedRef/isSafeSlug/_clean_entry, list_library never raises. No XSS path found.
+- [x] Verified in-browser: attention↔layer-norm mutual chips click through both ways.
+
 ## Verified state
-- Tests: 17 Python + 8 Node/jsdom, all green. Codex reviewed twice (14 findings, all fixed). Wheel installs and renders. Rendered page visually verified in-browser.
+- Tests: 42 Python + 16 Node/jsdom, all green. Codex reviewed 4 times (18 findings, all fixed). Wheel installs and renders. Rendered page + cross-links visually verified in-browser.
 
 ## Known limitations (documented, not blockers)
 - Browser visual of mermaid/katex not yet eyeballed (profile locked all session); graceful fallback implemented.

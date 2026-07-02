@@ -64,3 +64,24 @@ def test_render_rejects_invalid_explanation(monkeypatch, tmp_path):
     result = server.render({"id": "x", "title": "t"})  # missing required fields
     assert result.get("error") == "validation_failed"
     assert "detail" in result
+
+
+def test_list_library_is_a_registered_mcp_tool(monkeypatch, tmp_path):
+    monkeypatch.setenv("LAYERLENS_STORE", str(tmp_path))
+    from layerlens import server
+
+    tool_names = {t.name for t in server.mcp._tool_manager.list_tools()}
+    assert "list_library" in tool_names
+
+
+def test_list_library_reflects_rendered_explanations(monkeypatch, tmp_path):
+    monkeypatch.setenv("LAYERLENS_STORE", str(tmp_path))
+    from layerlens import server
+
+    assert server.list_library() == {"explanations": []}
+
+    result = server.render(_example())
+    assert "url" in result, result
+
+    listed = server.list_library()["explanations"]
+    assert any(e["slug"] == "scaled-dot-product-attention" for e in listed)

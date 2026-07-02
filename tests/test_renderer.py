@@ -26,6 +26,14 @@ def test_build_html_embeds_data_and_libs():
     assert "</script></script>" not in html
 
 
+def test_build_html_embeds_related():
+    # The example fixture carries a related link to layer-normalization; it must
+    # survive into the embedded JSON payload (the JS side renders it as a chip).
+    html = build_html(_example())
+    assert '"related"' in html
+    assert "layer-normalization" in html
+
+
 def test_write_explanation_creates_file(tmp_path):
     ex = Explanation.model_validate(_example())
     path = write_explanation(ex.model_dump(), str(tmp_path), ex.slug())
@@ -79,6 +87,16 @@ def test_reconcile_index_drops_missing_then_delete(tmp_path):
 def test_delete_explanation_rejects_traversal(tmp_path):
     assert delete_explanation(str(tmp_path), "../secret") is False
     assert delete_explanation(str(tmp_path), "a/b") is False
+
+
+def test_index_drops_unservable_slugs(tmp_path):
+    # A slug the server's URL allowlist can't serve must never appear in the
+    # library (it would render as a link that always 404s).
+    update_index(str(tmp_path), "a b", "Spaces", "technique")
+    update_index(str(tmp_path), "日本語", "Unicode", "technique")
+    update_index(str(tmp_path), "ok-slug", "Fine", "technique")
+    data = json.loads((tmp_path / "index.json").read_text(encoding="utf-8"))
+    assert [e["slug"] for e in data["explanations"]] == ["ok-slug"]
 
 
 def test_update_index_normalizes_bad_entries(tmp_path):

@@ -101,6 +101,13 @@ def build() -> dict:
             "paper_url": "https://arxiv.org/abs/1607.06450",
             "repo_url": "https://github.com/pytorch/pytorch",
         },
+        "related": [
+            {
+                "slug": "scaled-dot-product-attention",
+                "label": "Scaled Dot-Product Attention",
+                "relation": "related",
+            },
+        ],
         "components": [
             {
                 "id": "layer-normalization",

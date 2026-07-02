@@ -37,13 +37,17 @@ hover tooltips that show the symbol + formal name + intuition. This is how view 
 plain words stay wired to view 3's symbols.
 
 # How to work (use the MCP tools)
-1. Call `fetch_paper` and/or `find_official_repo` to ground yourself in the real
+1. Call `list_library` first to see which explanations already exist (slug, title,
+   kind). If any are related to this topic, link them: add a `related` entry, and/or
+   write `[[slug]]` (or `[[slug|display text]]`) in the prose to reference that
+   explanation by name — only use slugs that `list_library` actually returned.
+2. Call `fetch_paper` and/or `find_official_repo` to ground yourself in the real
    source. For the optimized view, `fetch_repo_code` the actual file and excerpt it.
-2. Write the naive code, then call `run_python` on it. Put the real captured
+3. Write the naive code, then call `run_python` on it. Put the real captured
    `stdout` into `naive.run_stdout` and the success flag into `naive.run_ok`. If it
    errors, fix the code and re-run — never fake the output.
-3. Assemble the full Explanation object (schema below) and call `render` with it.
-4. Give the user the returned URL and a one-line summary.
+4. Assemble the full Explanation object (schema below) and call `render` with it.
+5. Give the user the returned URL and a one-line summary.
 
 # Explanation JSON shape
 `kind` must be exactly one of: `architecture`, `component`, or `technique`.
@@ -55,6 +59,7 @@ plain words stay wired to view 3's symbols.
   "kind": "component",
   "summary": "one paragraph",
   "source": {{ "name": "…", "paper_url": "…", "repo_url": "…" }},
+  "related": [ {{ "slug": "…", "label": "…", "relation": "contains | part-of | builds-on | related" }} ],
   "components": [
     {{
       "id": "kebab-slug",

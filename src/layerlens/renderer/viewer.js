@@ -122,6 +122,145 @@
     }
   }
 
+  // ---- related / wikilink cross-links ----
+  //
+  // `related` (a per-explanation list) and inline `[[slug]]` / `[[slug|text]]`
+  // wikilinks both render as a "pending" <span class="wikilink pending"> first —
+  // never a live link — because we don't yet know whether `slug` exists in the
+  // library (and on a file:// page, we never will). Once (if) the index loads,
+  // `upgradeLinks` turns the ones that resolve into real <a> tags in place, and
+  // marks the rest `missing` (still not a link, just styled differently).
+
+  const RELATION_LABELS = {
+    contains: "含む",
+    "part-of": "一部",
+    "builds-on": "基づく",
+    related: "関連",
+  };
+
+  const WIKILINK_RE = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/;
+
+  // A slug is only trusted to build a same-origin link path. Mirror the local
+  // server's URL allowlist ([A-Za-z0-9_.-]+) — anything else would 404 anyway —
+  // which also excludes path separators and traversal.
+  function isSafeSlug(slug) {
+    return typeof slug === "string"
+      && /^[A-Za-z0-9_.\-]+$/.test(slug) && slug.indexOf("..") === -1;
+  }
+
+  function wikilinkSpan(doc, slug, label) {
+    const span = doc.createElement("span");
+    span.className = "wikilink pending";
+    span.setAttribute("data-slug", slug);
+    span.setAttribute("data-label", label || "");
+    span.textContent = label || slug;
+    return span;
+  }
+
+  // Wrap `[[slug]]` / `[[slug|text]]` occurrences in a subtree via DOM text walking
+  // (same approach as wrapTerms — never innerHTML). Skips code/pre/script/style,
+  // katex/mermaid/term/wikilink nodes, and existing <a> links so nothing already
+  // rendered gets corrupted. An unsafe slug (path separators / `..`) is left as
+  // literal text, not linkified.
+  function wrapWikilinks(root) {
+    const doc = root.ownerDocument;
+    const NF = (typeof NodeFilter !== "undefined") ? NodeFilter
+      : { SHOW_TEXT: 4, FILTER_ACCEPT: 1, FILTER_REJECT: 2 };
+    const skip = (elNode) => {
+      const tag = elNode.nodeName;
+      if (tag === "CODE" || tag === "PRE" || tag === "SCRIPT" || tag === "STYLE" || tag === "A") return true;
+      if (elNode.classList && (elNode.classList.contains("katex") || elNode.classList.contains("mermaid")
+        || elNode.classList.contains("term") || elNode.classList.contains("wikilink"))) return true;
+      return false;
+    };
+    const walker = doc.createTreeWalker(root, NF.SHOW_TEXT, {
+      acceptNode(node) {
+        for (let p = node.parentNode; p && p !== root.parentNode; p = p.parentNode) {
+          if (p.nodeType === 1 && skip(p)) return NF.FILTER_REJECT;
+        }
+        return WIKILINK_RE.test(node.nodeValue) ? NF.FILTER_ACCEPT : NF.FILTER_REJECT;
+      },
+    });
+    const targets = [];
+    let n;
+    while ((n = walker.nextNode())) targets.push(n);
+    targets.forEach((node) => replaceWikilinksInTextNode(node, doc));
+  }
+
+  function replaceWikilinksInTextNode(node, doc) {
+    const text = node.nodeValue;
+    const re = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+    let last = 0, m, any = false;
+    const frag = doc.createDocumentFragment();
+    while ((m = re.exec(text))) {
+      const slug = m[1].trim();
+      const label = m[2] ? m[2].trim() : "";
+      if (!isSafeSlug(slug)) continue; // leave this occurrence as literal text
+      any = true;
+      if (m.index > last) frag.appendChild(doc.createTextNode(text.slice(last, m.index)));
+      frag.appendChild(wikilinkSpan(doc, slug, label));
+      last = re.lastIndex;
+    }
+    if (any) {
+      if (last < text.length) frag.appendChild(doc.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    }
+  }
+
+  // Header chip row for `DATA.related`. Same pending-span mechanism as inline
+  // wikilinks so a single `upgradeLinks` pass resolves both.
+  function renderRelatedRow(doc, related) {
+    if (!Array.isArray(related) || !related.length) return null;
+    const row = el(doc, "div", "related-row");
+    related.forEach((ref) => {
+      if (!ref || !isSafeSlug(ref.slug)) return;
+      const chip = el(doc, "span", "chip");
+      const relSpan = el(doc, "span", "rel");
+      relSpan.textContent = RELATION_LABELS[ref.relation] || RELATION_LABELS.related;
+      chip.appendChild(relSpan);
+      chip.appendChild(wikilinkSpan(doc, ref.slug, ref.label || ""));
+      row.appendChild(chip);
+    });
+    return row.childNodes.length ? row : null;
+  }
+
+  // Reconcile every `.wikilink` node against the library index: known slugs become
+  // real <a href="./<slug>.html"> links, unknown ones become `.missing` spans.
+  // Runs on every index refresh and works in both directions (a link whose target
+  // was deleted downgrades back to `.missing`), so it must be idempotent.
+  function upgradeLinks(doc, indexEntries) {
+    // Object.create(null): a plain {} would make prototype keys ("__proto__",
+    // "toString", ...) look like existing slugs and upgrade to live links.
+    const bySlug = Object.create(null);
+    (Array.isArray(indexEntries) ? indexEntries : []).forEach((e) => {
+      if (e && typeof e.slug === "string") bySlug[e.slug] = e;
+    });
+    doc.querySelectorAll(".wikilink").forEach((node) => {
+      const slug = node.getAttribute("data-slug") || "";
+      const label = node.getAttribute("data-label") || "";
+      if (!isSafeSlug(slug)) return;
+      const entry = Object.prototype.hasOwnProperty.call(bySlug, slug) ? bySlug[slug] : null;
+      if (entry && node.tagName !== "A") {
+        const a = doc.createElement("a");
+        a.className = "wikilink";
+        a.setAttribute("data-slug", slug);
+        a.setAttribute("data-label", label);
+        a.href = "./" + encodeURIComponent(slug) + ".html";
+        a.textContent = label || entry.title || slug;
+        node.parentNode.replaceChild(a, node);
+      } else if (!entry && node.tagName === "A") {
+        const span = wikilinkSpan(doc, slug, label);
+        span.className = "wikilink missing";
+        span.setAttribute("title", "まだ生成されていません");
+        node.parentNode.replaceChild(span, node);
+      } else if (!entry) {
+        node.classList.remove("pending");
+        node.classList.add("missing");
+        node.setAttribute("title", "まだ生成されていません");
+      }
+    });
+  }
+
   // ---- browser-only rendering below ----
 
   const VIEW_TITLES = {
@@ -139,6 +278,7 @@
     const div = el(doc, "div", "prose");
     div.innerHTML = renderProseHTML(src, md);
     wrapTerms(div);
+    wrapWikilinks(div);
     return div;
   }
 
@@ -317,6 +457,7 @@
       .then((data) => {
         if (!data || !Array.isArray(data.explanations)) return;
         renderLibrary(doc, DATA, withCurrent(data.explanations, DATA));
+        upgradeLinks(doc, data.explanations);
       })
       .catch(() => {});
   }
@@ -390,6 +531,8 @@
     if (pa) src.appendChild(pa);
     if (ra) src.appendChild(ra);
     header.appendChild(src);
+    const relatedRow = renderRelatedRow(doc, DATA.related);
+    if (relatedRow) header.appendChild(relatedRow);
 
     const m = doc.getElementById("main");
     m.appendChild(header);
@@ -421,7 +564,10 @@
   }
 
   if (typeof module !== "undefined" && module.exports) {
-    module.exports = { escHtml, safeHref, createMd, renderProseHTML, wrapTerms, renderComponent };
+    module.exports = {
+      escHtml, safeHref, createMd, renderProseHTML, wrapTerms, renderComponent,
+      isSafeSlug, wrapWikilinks, renderRelatedRow, upgradeLinks,
+    };
   } else if (typeof document !== "undefined") {
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", main);
     else main();

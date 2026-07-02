@@ -13,7 +13,7 @@ from mcp.server.fastmcp import FastMCP
 from . import config, sources
 from .models import Explanation
 from .prompts import EXPLAIN_PROMPT
-from .renderer import ensure_server, update_index, write_explanation
+from .renderer import ensure_server, reconcile_index, update_index, write_explanation
 from .sandbox import run_python as _run_python
 
 mcp = FastMCP("layerlens")
@@ -83,6 +83,19 @@ def render(explanation: dict) -> dict:
 def explanation_schema() -> dict:
     """Return the JSON schema for an Explanation (handy for the host to self-check)."""
     return Explanation.model_json_schema()
+
+
+@mcp.tool()
+def list_library() -> dict:
+    """Return every explanation in the local library ({slug, title, kind} each).
+
+    Call this before writing ``related`` refs or ``[[slug]]`` wikilinks so the
+    host knows which slugs already exist in the store.
+    """
+    try:
+        return {"explanations": reconcile_index(config.store_dir())}
+    except Exception as exc:  # noqa: BLE001 — a filesystem hiccup must not kill the tool
+        return {"explanations": [], "error": "list_library_failed", "detail": str(exc)}
 
 
 # --- prompt ----------------------------------------------------------------

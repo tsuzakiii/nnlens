@@ -10,9 +10,10 @@ hover tooltips back to the matching ledger entry.
 from __future__ import annotations
 
 import hashlib
+import re
 from typing import Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class LedgerEntry(BaseModel):
@@ -75,6 +76,26 @@ class Source(BaseModel):
     repo_url: str = ""
 
 
+class RelatedRef(BaseModel):
+    """A link to another explanation in the local library."""
+
+    slug: str = Field(..., description="Slug of the related explanation, e.g. 'layer-normalization'.")
+    label: str = Field("", description="Display label; defaults to the slug at render time.")
+    relation: Literal["contains", "part-of", "builds-on", "related"] = "related"
+
+    @field_validator("slug")
+    @classmethod
+    def _require_servable_slug(cls, v: str) -> str:
+        # Must match the local server's path allowlist (^/e/[A-Za-z0-9_.\-]+\.html$),
+        # otherwise the link would render but always 404. This also excludes path
+        # separators / traversal outright.
+        if not re.fullmatch(r"[A-Za-z0-9_.\-]+", v) or ".." in v:
+            raise ValueError(
+                "related.slug must match [A-Za-z0-9_.-]+ (the server's URL allowlist)"
+            )
+        return v
+
+
 class Explanation(BaseModel):
     """A complete explanation: one architecture/technique, decomposed into components."""
 
@@ -84,6 +105,7 @@ class Explanation(BaseModel):
     summary: str = Field("", description="One-paragraph overview shown at the top.")
     source: Source
     components: list[Component] = Field(..., min_length=1)
+    related: list[RelatedRef] = Field(default_factory=list)
 
     def slug(self) -> str:
         # ASCII-only: the local render server's allowlist is ASCII, so a Japanese/

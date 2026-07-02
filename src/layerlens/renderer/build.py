@@ -44,12 +44,17 @@ def write_explanation(explanation: dict, store_dir: str, slug: str) -> str:
 # --- library index --------------------------------------------------------
 
 
+# Must match the local server's path allowlist — an entry with any other slug
+# would be listed/linked but always 404 when fetched.
+_SLUG_RE = re.compile(r"^[A-Za-z0-9_.\-]+$")
+
+
 def _clean_entry(entry: object) -> dict | None:
     """Normalize one index entry; return None if it isn't a usable record."""
     if not isinstance(entry, dict):
         return None
     slug = entry.get("slug")
-    if not isinstance(slug, str) or not slug:
+    if not isinstance(slug, str) or not _SLUG_RE.match(slug) or ".." in slug:
         return None
     title = entry.get("title")
     kind = entry.get("kind")

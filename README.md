@@ -3,6 +3,8 @@
 **Throw in a paper, a GitHub repo, or just the name of a technique — get back a
 layer-by-layer explanation of a neural network, in five linked views.**
 
+![layerlens rendering Layer Normalization: concept ledger, related-explanation chips, and the structure diagram](docs/img/screenshot.png)
+
 layerlens is an **MCP server + local renderer**. You connect it to an MCP host you
 already use (Claude Desktop, Claude Code, Cursor, …). The host's model — driven by
 **your own subscription** — does the explaining; layerlens gives it the methodology,
@@ -26,7 +28,21 @@ everyday word, symbol, and formal name across all of them:
 4. **素の実装** — a from-scratch implementation that is *literally the math*
    (pure Python / numpy, no torch), **actually executed** so the output is real.
 5. **最適化された実装** — the fast version, excerpted from the official repository
-   (with a source link) or written from scratch when none exists.
+   (with a source link) or written from scratch when none exists — numerically
+   cross-checked against the naive view when it's locally runnable.
+
+Beyond a single page:
+
+- **Library** — every explanation you generate is saved locally
+  (`~/.layerlens/store`) and listed in the sidebar; delete with the hover ✕.
+- **Cross-links** — explanations reference each other (`related` chips and
+  `[[slug]]` wikilinks in the prose). Links to explanations you haven't generated
+  yet show up greyed out — a built-in "what to explain next" list.
+- **Contract lint** — `render` returns warnings when the views drift apart
+  (a ledger term never marked, symbols leaking into the plain-words view, an
+  uncited optimized view, an unverified naive run), so the host fixes them.
+- **Self-healing pages** — pages are stamped with a template hash and rebuilt
+  automatically when layerlens updates its renderer.
 
 ## Install
 

@@ -46,6 +46,13 @@ plain words stay wired to view 3's symbols.
 3. Write the naive code, then call `run_python` on it. Put the real captured
    `stdout` into `naive.run_stdout` and the success flag into `naive.run_ok`. If it
    errors, fix the code and re-run — never fake the output.
+   - **Equivalence check (do it whenever the optimized view is locally runnable,
+     e.g. plain PyTorch):** write one more snippet that runs the naive and the
+     optimized implementation on the SAME small input and compares outputs
+     (`allclose` with a stated tolerance), run it with `run_python`, and record the
+     verdict in `optimized.note` (e.g. 「素の実装と数値一致を確認 (max|Δ| < 1e-6)」).
+     If it genuinely can't run locally (CUDA-only kernel, C++ excerpt), skip the
+     check silently — never fabricate a verdict.
 4. Assemble the full Explanation object (schema below) and call `render` with it.
 5. `render` returns a `warnings` list — the server lints the cross-view contract
    (every ledger term marked in the prose, no symbols in the words view, math in

@@ -90,4 +90,4 @@ subscription (host does inference; server = tools + methodology + renderer).
 - [ ] Architecture decomposition example (full Transformer block → attention/FFN/norm/residual).
 - [ ] Optional: offline/vendored CDN assets for the renderer.
 - [ ] Optional: `run_python` hardening (no-network mode).
-- [ ] Naming / PyPI availability check before publishing.
+- [ ] **Naming: `layerlens` is TAKEN** (PyPI 200; GitHub has a LayerLens org, 276★ repo). Must rename before publishing. Checked AVAILABLE on PyPI (2026-07-02): layerscope, nnlens, layerwise-explain, explayn, layerlore, fivelens. → user's pick.

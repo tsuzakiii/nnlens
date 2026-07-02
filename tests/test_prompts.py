@@ -13,3 +13,9 @@ def test_explain_prompt_mentions_list_library_and_related():
     assert "list_library" in result
     assert '"related"' in result
     assert "[[slug]]" in result or "[[slug|" in result
+
+
+def test_explain_prompt_mentions_equivalence_check_and_warnings():
+    result = EXPLAIN_PROMPT.format(topic="x")
+    assert "allclose" in result, "naive-vs-optimized equivalence check step"
+    assert "warnings" in result, "fix-lint-warnings-and-re-render step"

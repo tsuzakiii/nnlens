@@ -11,6 +11,7 @@ from __future__ import annotations
 from mcp.server.fastmcp import FastMCP
 
 from . import config, sources
+from .lint import lint_explanation
 from .models import Explanation
 from .prompts import EXPLAIN_PROMPT
 from .renderer import ensure_server, reconcile_index, update_index, write_explanation
@@ -76,6 +77,8 @@ def render(explanation: dict) -> dict:
         "url": f"http://127.0.0.1:{port}/e/{ex.slug()}.html",
         "path": path,
         "components": [c.name for c in ex.components],
+        # Contract lint (never blocking): fix these and re-render, or justify them.
+        "warnings": lint_explanation(ex),
     }
 
 

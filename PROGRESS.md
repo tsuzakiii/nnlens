@@ -71,8 +71,13 @@ subscription (host does inference; server = tools + methodology + renderer).
 - [x] Proven on the real store: the PRISM page (stuck on the old max-width:900px CSS) auto-upgraded to the current layout + wikilink viewer on server restart.
 - [x] `write_explanation` atomic (temp+os.replace). Codex review #5 (2 findings, fixed): renders win over rebuilds via mtime guard (`_replace_if_unchanged`), fixed short temp prefix (Windows path limits), per-page failure isolation, rebuild/reconcile guarded separately at startup.
 
+## Done (2026-07-02, cont. 2) — render() lints the cross-view contract
+- [x] New `lint.py`: render() returns non-blocking `warnings` — ledger terms actually marked in prose, marks resolve to a ledger entry, words view symbol-free ($/non-ASCII symbols; single ASCII letters skipped), math view has notation, optimized view cites a source or declares self-impl, naive run verified (run_ok).
+- [x] Codex review #6 (3 findings, all fixed): lint now mirrors the RENDERER — code/math regions stripped before analysis (`` `{{x}}` `` doesn't count as wired; `` `$PATH` `` doesn't flag), and mark resolution is global across components (matches viewer.js's merged ledgerMap).
+- [x] Prompt: host is told to fix warnings and re-render. Dogfood test: bundled fixtures are lint-clean.
+
 ## Verified state
-- Tests: 45 Python + 16 Node/jsdom, all green. Codex reviewed 5 times (20 findings, all fixed). Wheel installs and renders. Rendered page + cross-links visually verified in-browser; legacy-page auto-rebuild verified on the real store.
+- Tests: 59 Python + 16 Node/jsdom, all green. Codex reviewed 6 times (23 findings, all fixed). Wheel installs and renders. Rendered page + cross-links visually verified in-browser; legacy-page auto-rebuild verified on the real store.
 
 ## Known limitations (documented, not blockers)
 - Browser visual of mermaid/katex not yet eyeballed (profile locked all session); graceful fallback implemented.

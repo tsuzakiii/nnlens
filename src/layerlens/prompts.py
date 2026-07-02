@@ -47,7 +47,12 @@ plain words stay wired to view 3's symbols.
    `stdout` into `naive.run_stdout` and the success flag into `naive.run_ok`. If it
    errors, fix the code and re-run — never fake the output.
 4. Assemble the full Explanation object (schema below) and call `render` with it.
-5. Give the user the returned URL and a one-line summary.
+5. `render` returns a `warnings` list — the server lints the cross-view contract
+   (every ledger term marked in the prose, no symbols in the words view, math in
+   the math view, a cited or self-declared optimized view, a verified naive run).
+   If it is non-empty, fix the explanation and call `render` again; only leave a
+   warning standing if you can genuinely justify it to the user.
+6. Give the user the returned URL and a one-line summary.
 
 # Explanation JSON shape
 `kind` must be exactly one of: `architecture`, `component`, or `technique`.

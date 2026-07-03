@@ -1,5 +1,11 @@
 # nnlens — progress / task board
 
+## Done (2026-07-03) — PUBLISHED on GitHub
+- [x] Public repo: https://github.com/tsuzakiii/nnlens (topics: mcp, neural-networks, education, explainer, claude).
+- [x] All 21 commits rewritten to `tsuzakiii <236340194+tsuzakiii@users.noreply.github.com>` before push (old name/email fully purged from history, backup refs expired; verified 0 traces).
+- [x] Hero screenshot (Transformer block page) + [project.urls] in pyproject.
+- [x] dist built + `twine check` PASSED. **PyPI upload pending: needs the user's PyPI account + API token** (`~/.pypirc` or `twine upload -u __token__ -p pypi-...`); everything else is ready.
+
 ## Done (2026-07-03) — renamed layerlens → (layerlore) → nnlens
 - [x] "layerlens" was taken (PyPI 200; a "LayerLens" GitHub org with a 276★ repo). Interim pick "layerlore" was applied and working, then the user weighed in; final name **nnlens** — verified completely clean (PyPI 404, GitHub 0 repos, the cleanest of all candidates).
 - [x] Renamed package / console script / MCP server name / env vars (NNLENS_STORE, NNLENS_PORT) / branding; repo folder moved to C:\ClaudeCode\nnlens; fresh venv.

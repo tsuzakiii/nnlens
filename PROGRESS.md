@@ -52,6 +52,10 @@ subscription (host does inference; server = tools + methodology + renderer).
 - [x] Built wheel; verified template.html + viewer.js are packaged; fresh-install smoke test renders + MCP imports. `pip install` claim holds.
 - [x] 3 local commits (no push).
 
+## Done (2026-07-03, cont.) — real-host E2E passed (multi-component)
+- [x] Headless `claude -p` (a REAL host on the user's subscription), given only the explain prompt + the nnlens MCP tools, autonomously produced "Transformer Block (Pre-Norm)": kind=architecture with 4 components (block wiring / LayerNorm / MHA / FFN), all 4 naive views actually executed (run_ok true; row-sums/causal-mask/identity checks), optimized views excerpted from karpathy/nanoGPT, related+wikilinks to all 3 existing explanations, torch equivalence honestly skipped (no torch), **final render warnings: []**. Library now 5 entries; page visually verified.
+- [x] This validates the design bets: list_library-before-linking, run_python-not-fabricate, lint-as-quality-gate, and the multi-component schema — all under a host I didn't steer.
+
 ## Needs the user / external (can't do autonomously)
 - [ ] Browser *visual* of mermaid/katex: browser-scenario profile stayed locked all session. Logic verified headlessly; retry when it frees.
 - [ ] End-to-end host-driven run: needs the user's own MCP host (Claude Desktop / Claude Code) — add nnlens, run /explain, confirm the round-trip.

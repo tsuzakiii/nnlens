@@ -3,12 +3,12 @@
 **Throw in a paper, a GitHub repo, or just the name of a technique — get back a
 layer-by-layer explanation of a neural network, in five linked views.**
 
-![nnlens rendering RoPE in English: related-explanation chips, the concept ledger, and the structure diagram](docs/img/screenshot.png)
+![nnlens rendering RoPE in English: related-explanation chips, the concept ledger, and the structure diagram](https://raw.githubusercontent.com/tsuzakiii/nnlens/main/docs/img/screenshot.png)
 
 <details>
 <summary>…and it speaks your language — the same viewer rendering a Japanese Transformer-block explanation</summary>
 
-![nnlens rendering a Transformer block in Japanese: multi-component sidebar, related chips, concept ledger, structure diagram](docs/img/screenshot-ja.png)
+![nnlens rendering a Transformer block in Japanese: multi-component sidebar, related chips, concept ledger, structure diagram](https://raw.githubusercontent.com/tsuzakiii/nnlens/main/docs/img/screenshot-ja.png)
 
 </details>
 

@@ -40,6 +40,8 @@ Every component (a layer, block, or technique) is explained in FIVE linked views
 # The concept ledger (this is what links the views)
 For each component, build a `ledger`: a list of concepts, each with
 `plain` (everyday word), `symbol`, `formal` (textbook term), and `intuition`.
+`symbol` is rendered as PLAIN TEXT in a table — write Unicode (α, θᵢ, Q·Kᵀ/√d,
+xₘ), never `$TeX$` (it would show up literally, dollar signs and all).
 In the `words` and `math` prose, wrap every ledger concept in double braces the
 first time it matters, e.g. write `{{{{注目度}}}}`. The renderer turns these into
 hover tooltips that show the symbol + formal name + intuition. This is how view 2's

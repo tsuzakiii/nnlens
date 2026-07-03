@@ -53,7 +53,7 @@ pip install nnlens        # or: pipx install nnlens
 Or from source:
 
 ```bash
-git clone https://github.com/<you>/nnlens
+git clone https://github.com/tsuzakiii/nnlens
 cd nnlens
 pip install -e .
 ```

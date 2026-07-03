@@ -130,11 +130,13 @@ MCP host (your subscription) ── drives ──► nnlens tools
   sketch. View 4 is executed, so its output is real; the rest is best-effort.
 - **`run_python` runs in a best-effort sandbox, not a hardened one.** Snippets get
   an isolated interpreter (`python -I`), a scrubbed environment (your API keys and
-  tokens simply aren't in it), no network (socket disabled before the snippet
-  runs), memory / CPU-time / file-size caps, and a process-tree kill on timeout.
-  A payload that really wants to can still undo in-process shims — keep your
-  host's permission prompt on this tool, and run the whole server in a container
-  if you need real isolation.
+  tokens simply aren't in it), no network (both `socket` and `_socket` disabled),
+  no process creation (`subprocess`/`os.system`/`exec*`/`spawn*` refused, so a
+  child interpreter can't slip past the shims), memory / CPU-time / file-size
+  caps, and a process-tree kill on timeout. These are in-process defenses: a
+  payload determined to reach C-level APIs (e.g. via `ctypes`) can still undo
+  them — keep your host's permission prompt on this tool, and run the whole
+  server in a container if you need a real boundary.
 - **View 5 excerpts** are fetched from public repos at view time and shown with
   attribution; nothing is redistributed. Respect each source repo's license.
 - The renderer loads Markdown/Mermaid/KaTeX from a CDN, so viewing needs internet.

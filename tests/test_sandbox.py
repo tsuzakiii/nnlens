@@ -34,3 +34,36 @@ def test_output_is_bounded():
     r = run_python("print('x' * 100000)")
     assert r["ok"] is True
     assert len(r["stdout"]) <= 8100  # STDOUT_CAP (+ a little slack)
+
+
+def test_network_is_disabled():
+    r = run_python("import socket\nsocket.socket()")
+    assert r["ok"] is False
+    assert "network access is disabled" in r["stderr"]
+
+
+def test_parent_env_is_scrubbed(monkeypatch):
+    monkeypatch.setenv("NNLENS_FAKE_SECRET", "leak-me")
+    r = run_python("import os; print(repr(os.environ.get('NNLENS_FAKE_SECRET')))")
+    assert r["ok"] is True
+    assert "leak-me" not in r["stdout"]
+    assert "None" in r["stdout"]
+
+
+def test_sandbox_control_vars_not_visible_to_snippet():
+    r = run_python("import os; print(repr(os.environ.get('NNLENS_SB_MEM')))")
+    assert r["ok"] is True
+    assert "None" in r["stdout"]
+
+
+def test_memory_cap_stops_huge_allocation():
+    # 3 GiB > the 2 GiB cap: rlimit (POSIX) or Job Object (Windows) must stop it.
+    r = run_python("x = bytearray(3 * 1024**3)\nprint('allocated')")
+    assert r["ok"] is False
+    assert "allocated" not in r["stdout"]
+
+
+def test_numpy_still_importable_in_sandbox():
+    r = run_python("import numpy; print('np', numpy.__version__)")
+    assert r["ok"] is True, r["stderr"]
+    assert "np" in r["stdout"]

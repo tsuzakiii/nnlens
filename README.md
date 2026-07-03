@@ -128,9 +128,13 @@ MCP host (your subscription) ── drives ──► nnlens tools
 - **Correctness is not guaranteed.** The prose and math are written by the host
   model. Diagrams are model-generated and are the weakest link — treat view 1 as a
   sketch. View 4 is executed, so its output is real; the rest is best-effort.
-- **`run_python` is not a hardened sandbox.** It runs code your host produced, on
-  your machine, with a timeout — not untrusted third-party code. Don't point it at
-  untrusted input.
+- **`run_python` runs in a best-effort sandbox, not a hardened one.** Snippets get
+  an isolated interpreter (`python -I`), a scrubbed environment (your API keys and
+  tokens simply aren't in it), no network (socket disabled before the snippet
+  runs), memory / CPU-time / file-size caps, and a process-tree kill on timeout.
+  A payload that really wants to can still undo in-process shims — keep your
+  host's permission prompt on this tool, and run the whole server in a container
+  if you need real isolation.
 - **View 5 excerpts** are fetched from public repos at view time and shown with
   attribution; nothing is redistributed. Respect each source repo's license.
 - The renderer loads Markdown/Mermaid/KaTeX from a CDN, so viewing needs internet.

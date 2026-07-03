@@ -67,3 +67,34 @@ def test_numpy_still_importable_in_sandbox():
     r = run_python("import numpy; print('np', numpy.__version__)")
     assert r["ok"] is True, r["stderr"]
     assert "np" in r["stdout"]
+
+
+def test_socket_c_module_is_also_blocked():
+    # Codex-verified bypass: the C extension module was left unpatched.
+    r = run_python("import _socket\n_socket.socket()")
+    assert r["ok"] is False
+    assert "network access is disabled" in r["stderr"]
+
+
+def test_socket_alias_sockettype_is_blocked():
+    r = run_python("import socket\nsocket.SocketType()")
+    assert r["ok"] is False
+    assert "network access is disabled" in r["stderr"]
+
+
+def test_process_creation_is_blocked():
+    # A spawned interpreter would carry none of the shims, so spawning is refused.
+    r = run_python("import subprocess, sys\nsubprocess.run([sys.executable, '-c', 'pass'])")
+    assert r["ok"] is False
+    assert "process creation is disabled" in r["stderr"]
+
+    r2 = run_python("import os\nos.system('echo hi')")
+    assert r2["ok"] is False
+    assert "process creation is disabled" in r2["stderr"]
+
+
+def test_sibling_module_import_works_like_a_script():
+    # -I drops the script dir from sys.path; the boot shim restores just that dir.
+    r = run_python("open('helper.py','w').write('value = 7')\nimport helper\nprint(helper.value)")
+    assert r["ok"] is True, r["stderr"]
+    assert "7" in r["stdout"]

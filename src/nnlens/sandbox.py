@@ -8,8 +8,11 @@ Sandbox (best-effort, accident-level — see the honest limits below):
   - the child runs ``python -I`` (isolated mode: no user site, no PYTHON* env);
   - its **environment is scrubbed** — API keys/tokens in the parent's env are
     simply not there; HOME/TEMP point into the throwaway working dir;
-  - **network is disabled** (a boot shim stubs out ``socket``'s constructors
-    before the snippet runs);
+  - **network is disabled** (a boot shim stubs the constructors on both the
+    ``socket`` module and the ``_socket`` C module before the snippet runs) and
+    **process creation is blocked** (``subprocess.Popen``, ``os.system``/
+    ``spawn*``/``exec*``/``fork``, ``_winapi.CreateProcess``) — a spawned
+    interpreter would carry none of these shims, so spawning is refused;
   - **resource caps**: memory / CPU-time / written-file-size via rlimits on
     POSIX, and a Job Object (memory + max processes + kill-on-close) on Windows;
   - stdout/stderr are drained on background threads and bounded; UTF-8 decoding
@@ -63,20 +66,55 @@ else:
     for _k in ("NNLENS_SB_MEM", "NNLENS_SB_CPU", "NNLENS_SB_FSIZE"):
         os.environ.pop(_k, None)
 
-import socket as _socket
-
 def _no_net(*_a, **_k):
     raise OSError("nnlens sandbox: network access is disabled")
 
-for _name in (
-    "socket", "socketpair", "create_connection", "create_server",
-    "getaddrinfo", "gethostbyname", "gethostbyname_ex", "gethostbyaddr",
-):
-    if hasattr(_socket, _name):
-        setattr(_socket, _name, _no_net)
-del _socket
+def _no_spawn(*_a, **_k):
+    raise OSError("nnlens sandbox: process creation is disabled")
 
+# Block sockets on BOTH the Python module and the C extension module — patching
+# only `socket` leaves `_socket.socket` and aliases like `socket.SocketType` live.
+import socket as _socket_mod
+try:
+    import _socket as _socket_c
+except Exception:
+    _socket_c = None
+for _mod in (_socket_mod, _socket_c):
+    if _mod is None:
+        continue
+    for _name in (
+        "socket", "SocketType", "socketpair", "fromfd", "fromshare", "dup",
+        "create_connection", "create_server",
+        "getaddrinfo", "gethostbyname", "gethostbyname_ex", "gethostbyaddr",
+    ):
+        if hasattr(_mod, _name):
+            setattr(_mod, _name, _no_net)
+del _socket_mod, _socket_c
+
+# Block process creation: a spawned interpreter would carry none of these shims.
+import subprocess as _sp
+_sp.Popen = _no_spawn
+del _sp
+for _name in (
+    "system", "startfile", "fork", "forkpty", "posix_spawn", "posix_spawnp",
+    "execv", "execve", "execvp", "execvpe", "execl", "execle", "execlp", "execlpe",
+    "spawnv", "spawnve", "spawnvp", "spawnvpe", "spawnl", "spawnle", "spawnlp", "spawnlpe",
+):
+    if hasattr(os, _name):
+        setattr(os, _name, _no_spawn)
+try:
+    import _winapi as _wapi
+    _wapi.CreateProcess = _no_spawn
+    del _wapi
+except ImportError:
+    pass
+
+# `python -I` drops the script dir from sys.path; restore ONLY the snippet's own
+# dir so `import helper` next to the snippet works like a normal script run.
 _path = sys.argv[1]
+_snippet_dir = os.path.dirname(os.path.abspath(_path))
+if _snippet_dir not in sys.path:
+    sys.path.insert(0, _snippet_dir)
 sys.argv = [_path]
 runpy.run_path(_path, run_name="__main__")
 """

@@ -3,7 +3,14 @@
 **Throw in a paper, a GitHub repo, or just the name of a technique — get back a
 layer-by-layer explanation of a neural network, in five linked views.**
 
-![nnlens rendering a Transformer block: multi-component sidebar, related-explanation chips, concept ledger, and the structure diagram](docs/img/screenshot.png)
+![nnlens rendering RoPE in English: related-explanation chips, the concept ledger, and the structure diagram](docs/img/screenshot.png)
+
+<details>
+<summary>…and it speaks your language — the same viewer rendering a Japanese Transformer-block explanation</summary>
+
+![nnlens rendering a Transformer block in Japanese: multi-component sidebar, related chips, concept ledger, structure diagram](docs/img/screenshot-ja.png)
+
+</details>
 
 nnlens is an **MCP server + local renderer**. You connect it to an MCP host you
 already use (Claude Desktop, Claude Code, Cursor, …). The host's model — driven by

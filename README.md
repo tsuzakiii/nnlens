@@ -33,6 +33,10 @@ everyday word, symbol, and formal name across all of them:
 
 Beyond a single page:
 
+- **Any language** — explanations are written in whatever language you ask in,
+  and the page chrome follows: ja/en labels are built in, and the host supplies
+  `ui_labels` translations for anything else. Nothing about your language is
+  hardcoded.
 - **Library** — every explanation you generate is saved locally
   (`~/.nnlens/store`) and listed in the sidebar; delete with the hover ✕.
 - **Cross-links** — explanations reference each other (`related` chips and

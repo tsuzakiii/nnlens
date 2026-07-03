@@ -60,7 +60,7 @@
   .prose :not(pre) > code { background: var(--panel); border: 1px solid var(--border); border-radius: 5px;
     padding: 1px 5px; font-size: 90%; }
   .mermaid { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 16px; text-align: center; }
-  .mermaid.diagram-error::after { content: "（この構造図は描画できませんでした）"; color: var(--muted); font-size: 13px; }
+  .mermaid.diagram-error::after { content: attr(data-error-msg); color: var(--muted); font-size: 13px; }
   table.ledger { border-collapse: collapse; width: 100%; font-size: 14px; margin: 10px 0; }
   table.ledger th, table.ledger td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
   table.ledger th { background: var(--panel); }

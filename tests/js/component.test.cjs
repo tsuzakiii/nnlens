@@ -65,3 +65,41 @@ test("renderComponent shows a failure badge when run_ok is false", () => {
   const sec = viewer.renderComponent(doc, md, comp, 0, {});
   assert.ok(sec.querySelector(".run.fail .badge.fail"), "failure badge present");
 });
+
+test("setLanguage('en') switches the UI chrome labels", () => {
+  const dom = new JSDOM("<!doctype html><body></body>");
+  const doc = dom.window.document;
+  viewer.setLanguage("en");
+  try {
+    const sec = viewer.renderComponent(doc, md, sampleComponent(), 0, {});
+    const heads = [...sec.querySelectorAll(".view h3")].map((h) => h.textContent);
+    assert.ok(heads[0].includes("Structure"), "view titles switch to English");
+    assert.ok(sec.querySelector("table.ledger th").textContent.includes("Plain name"));
+    assert.ok(sec.querySelector(".run .badge").textContent.includes("run verified"));
+  } finally {
+    viewer.setLanguage("ja"); // restore for the other tests in this process
+  }
+});
+
+test("ui_labels from the host localize any language; bogus entries ignored", () => {
+  const dom = new JSDOM("<!doctype html><body></body>");
+  const doc = dom.window.document;
+  viewer.setLanguage("fr", {
+    structure: "Structure (fr)",
+    library: "Bibliothèque",
+    run_ok: 123,            // non-string: ignored
+    bogus_key: "x",          // unknown key: ignored
+    confirm_delete: "Supprimer {title} ?",
+  });
+  try {
+    const sec = viewer.renderComponent(doc, md, sampleComponent(), 0, {});
+    const heads = [...sec.querySelectorAll(".view h3")].map((h) => h.textContent);
+    assert.ok(heads[0].includes("Structure (fr)"), "host-supplied view title used");
+    assert.ok(
+      sec.querySelector(".run .badge").textContent.includes("run verified"),
+      "unknown language falls back to English for non-overridden strings",
+    );
+  } finally {
+    viewer.setLanguage("ja");
+  }
+});

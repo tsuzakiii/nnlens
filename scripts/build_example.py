@@ -123,6 +123,7 @@ def build() -> dict:
         "id": "scaled-dot-product-attention",
         "title": "Scaled Dot-Product Attention",
         "kind": "component",
+        "language": "ja",
         "summary": "Transformer の心臓部。各単語が「どの単語をどれだけ見るか」を{{注目度}}として計算し、"
         "その配分で情報を混ぜ合わせる仕組み。",
         "source": {

@@ -131,12 +131,104 @@
   // `upgradeLinks` turns the ones that resolve into real <a> tags in place, and
   // marks the rest `missing` (still not a link, just styled differently).
 
-  const RELATION_LABELS = {
-    contains: "含む",
-    "part-of": "一部",
-    "builds-on": "基づく",
-    related: "関連",
+  // ---- UI language ----
+  // The prose language is chosen by the host (Explanation.language); the viewer's
+  // chrome follows it. Pages without the field (pre-i18n) default to Japanese.
+  const STRINGS = {
+    ja: {
+      views: { structure: "構造", words: "言葉での説明", math: "数式", naive: "素の実装", optimized: "最適化された実装" },
+      relations: { contains: "含む", "part-of": "一部", "builds-on": "基づく", related: "関連" },
+      ledgerHead: ["平易な呼び名", "記号", "正式名", "直感"],
+      runOk: "実行成功", runFail: "実行失敗",
+      source: "出典: ", selfImpl: "公式実装が見つからなかったため自前実装",
+      library: "ライブラリ", missing: "まだ生成されていません",
+      del: "削除",
+      confirmDel: (t) => "「" + t + "」を削除しますか？（ファイルも消えます）",
+      delFailed: "削除に失敗しました",
+      diagramError: "（この構造図は描画できませんでした）",
+      paper: "📄 論文", repo: "💻 リポジトリ",
+    },
+    en: {
+      views: { structure: "Structure", words: "In plain words", math: "The math", naive: "Naive implementation", optimized: "Optimized implementation" },
+      relations: { contains: "contains", "part-of": "part of", "builds-on": "builds on", related: "related" },
+      ledgerHead: ["Plain name", "Symbol", "Formal name", "Intuition"],
+      runOk: "run verified", runFail: "run failed",
+      source: "Source: ", selfImpl: "No official implementation found — written from scratch",
+      library: "Library", missing: "Not generated yet",
+      del: "Delete",
+      confirmDel: (t) => 'Delete "' + t + '"? (also removes the file)',
+      delFailed: "Delete failed",
+      diagramError: "(this structure diagram could not be rendered)",
+      paper: "📄 Paper", repo: "💻 Repository",
+    },
   };
+
+  function strings(lang) {
+    const key = String(lang || "ja").toLowerCase().slice(0, 2);
+    return STRINGS[key] || STRINGS.en;
+  }
+
+  // The built-in tables are only FALLBACKS (ja/en). The host — which knows the
+  // user's language — can localize every chrome string via DATA.ui_labels, so any
+  // language works without the viewer hardcoding it. Values are plain strings
+  // rendered via textContent only; bogus keys/types are ignored.
+  function buildL(lang, overrides) {
+    const base = strings(lang);
+    const out = {
+      views: Object.assign({}, base.views),
+      relations: Object.assign({}, base.relations),
+      ledgerHead: base.ledgerHead.slice(),
+      runOk: base.runOk, runFail: base.runFail,
+      source: base.source, selfImpl: base.selfImpl,
+      library: base.library, missing: base.missing,
+      del: base.del, confirmDel: base.confirmDel, delFailed: base.delFailed,
+      diagramError: base.diagramError, paper: base.paper, repo: base.repo,
+    };
+    if (overrides && typeof overrides === "object") {
+      const str = (v) => (typeof v === "string" && v.length > 0 && v.length <= 120 ? v : null);
+      const apply = {
+        structure: (v) => { out.views.structure = v; },
+        words: (v) => { out.views.words = v; },
+        math: (v) => { out.views.math = v; },
+        naive: (v) => { out.views.naive = v; },
+        optimized: (v) => { out.views.optimized = v; },
+        ledger_plain: (v) => { out.ledgerHead[0] = v; },
+        ledger_symbol: (v) => { out.ledgerHead[1] = v; },
+        ledger_formal: (v) => { out.ledgerHead[2] = v; },
+        ledger_intuition: (v) => { out.ledgerHead[3] = v; },
+        relation_contains: (v) => { out.relations.contains = v; },
+        relation_part_of: (v) => { out.relations["part-of"] = v; },
+        relation_builds_on: (v) => { out.relations["builds-on"] = v; },
+        relation_related: (v) => { out.relations.related = v; },
+        run_ok: (v) => { out.runOk = v; },
+        run_fail: (v) => { out.runFail = v; },
+        source: (v) => { out.source = v; },
+        self_impl: (v) => { out.selfImpl = v; },
+        library: (v) => { out.library = v; },
+        missing: (v) => { out.missing = v; },
+        "delete": (v) => { out.del = v; },
+        delete_failed: (v) => { out.delFailed = v; },
+        confirm_delete: (v) => {
+          out.confirmDel = (t) => (v.indexOf("{title}") !== -1 ? v.split("{title}").join(t) : v + " — " + t);
+        },
+        diagram_error: (v) => { out.diagramError = v; },
+        paper: (v) => { out.paper = v; },
+        repo: (v) => { out.repo = v; },
+      };
+      Object.keys(apply).forEach((k) => {
+        const v = str(overrides[k]);
+        if (v !== null) apply[k](v);
+      });
+    }
+    return out;
+  }
+
+  let L = buildL("ja"); // module default; main()/setLanguage() switch it per page
+
+  function setLanguage(lang, uiLabels) {
+    L = buildL(lang, uiLabels);
+    return L;
+  }
 
   const WIKILINK_RE = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/;
 
@@ -216,7 +308,7 @@
       if (!ref || !isSafeSlug(ref.slug)) return;
       const chip = el(doc, "span", "chip");
       const relSpan = el(doc, "span", "rel");
-      relSpan.textContent = RELATION_LABELS[ref.relation] || RELATION_LABELS.related;
+      relSpan.textContent = L.relations[ref.relation] || L.relations.related;
       chip.appendChild(relSpan);
       chip.appendChild(wikilinkSpan(doc, ref.slug, ref.label || ""));
       row.appendChild(chip);
@@ -251,22 +343,17 @@
       } else if (!entry && node.tagName === "A") {
         const span = wikilinkSpan(doc, slug, label);
         span.className = "wikilink missing";
-        span.setAttribute("title", "まだ生成されていません");
+        span.setAttribute("title", L.missing);
         node.parentNode.replaceChild(span, node);
       } else if (!entry) {
         node.classList.remove("pending");
         node.classList.add("missing");
-        node.setAttribute("title", "まだ生成されていません");
+        node.setAttribute("title", L.missing);
       }
     });
   }
 
   // ---- browser-only rendering below ----
-
-  const VIEW_TITLES = {
-    structure: "構造", words: "言葉での説明", math: "数式",
-    naive: "素の実装", optimized: "最適化された実装",
-  };
 
   function el(doc, tag, cls) {
     const e = doc.createElement(tag);
@@ -308,7 +395,7 @@
     const badge = el(doc, "span", "num");
     badge.textContent = num;
     h.appendChild(badge);
-    h.appendChild(doc.createTextNode(" " + VIEW_TITLES[key]));
+    h.appendChild(doc.createTextNode(" " + L.views[key]));
     v.appendChild(h);
     (Array.isArray(nodes) ? nodes : [nodes]).forEach((nd) => nd && v.appendChild(nd));
     return v;
@@ -318,7 +405,13 @@
     if (!ledger || !ledger.length) return null;
     const t = el(doc, "table", "ledger");
     const head = el(doc, "thead");
-    head.innerHTML = "<tr><th>平易な呼び名</th><th>記号</th><th>正式名</th><th>直感</th></tr>";
+    const hr = el(doc, "tr");
+    L.ledgerHead.forEach((label) => {
+      const th = el(doc, "th");
+      th.textContent = label;
+      hr.appendChild(th);
+    });
+    head.appendChild(hr);
     t.appendChild(head);
     const tb = el(doc, "tbody");
     ledger.forEach((e) => {
@@ -365,7 +458,7 @@
       const ok = nv.run_ok !== false;
       const run = el(doc, "div", "run" + (ok ? "" : " fail"));
       const badge = el(doc, "span", "badge " + (ok ? "ok" : "fail"));
-      badge.textContent = ok ? "実行成功" : "実行失敗";
+      badge.textContent = ok ? L.runOk : L.runFail;
       run.appendChild(badge);
       if (nv.run_stdout) run.appendChild(codeBlock(doc, nv.run_stdout, null));
       nvNodes.push(run);
@@ -379,12 +472,12 @@
       const label = (op.source.repo || "") + (op.source.path ? "/" + op.source.path : "");
       const a = anchor(doc, op.source.url || ("https://github.com/" + op.source.repo), label || "source");
       const line = el(doc, "div", "src-link");
-      line.appendChild(doc.createTextNode("出典: "));
+      line.appendChild(doc.createTextNode(L.source));
       if (a) line.appendChild(a); else { const s = el(doc, "span"); s.textContent = label; line.appendChild(s); }
       opNodes.push(line);
     } else if (op.is_self_impl) {
       const note = el(doc, "div", "note");
-      note.textContent = "公式実装が見つからなかったため自前実装";
+      note.textContent = L.selfImpl;
       opNodes.push(note);
     }
     opNodes.push(codeBlock(doc, op.code, op.language || "python"));
@@ -416,7 +509,7 @@
     const toc = doc.getElementById("toc");
     toc.textContent = "";
     const label = el(doc, "div", "lib-label");
-    label.textContent = "ライブラリ";
+    label.textContent = L.library;
     toc.appendChild(label);
     const slug = currentSlug();
     const manage = canManage();
@@ -430,7 +523,7 @@
       if (manage) {
         const del = el(doc, "button", "del");
         del.type = "button";
-        del.title = "削除";
+        del.title = L.del;
         del.textContent = "✕";
         del.addEventListener("click", (ev) => {
           ev.preventDefault();
@@ -463,7 +556,7 @@
   }
 
   function deleteEntry(doc, DATA, slug, title, isCurrent) {
-    if (!window.confirm("「" + title + "」を削除しますか？（ファイルも消えます）")) return;
+    if (!window.confirm(L.confirmDel(title))) return;
     fetch("./" + encodeURIComponent(slug) + ".html", { method: "DELETE" })
       .then((r) => {
         if (!(r.ok || r.status === 204)) throw new Error("delete failed");
@@ -477,7 +570,7 @@
             else location.reload();
           });
       })
-      .catch(() => window.alert("削除に失敗しました"));
+      .catch(() => window.alert(L.delFailed));
   }
 
   // Show the current explanation immediately; when served over http, pull the full
@@ -517,6 +610,8 @@
   function main() {
     const doc = document;
     const DATA = JSON.parse(doc.getElementById("data").textContent);
+    setLanguage(DATA.language, DATA.ui_labels); // chrome follows the prose language; host can localize any language
+    doc.documentElement.lang = String(DATA.language || "ja");
     const md = createMd();
     const ledgerMap = {};
 
@@ -526,8 +621,8 @@
     h1.appendChild(kind); header.appendChild(h1);
     if (DATA.summary) header.appendChild(proseEl(doc, md, DATA.summary));
     const src = el(doc, "div", "src");
-    const pa = DATA.source && anchor(doc, DATA.source.paper_url, "📄 論文");
-    const ra = DATA.source && anchor(doc, DATA.source.repo_url, "💻 リポジトリ");
+    const pa = DATA.source && anchor(doc, DATA.source.paper_url, L.paper);
+    const ra = DATA.source && anchor(doc, DATA.source.repo_url, L.repo);
     if (pa) src.appendChild(pa);
     if (ra) src.appendChild(ra);
     header.appendChild(src);
@@ -560,13 +655,14 @@
     doc.querySelectorAll(".mermaid").forEach((node) => {
       if (node.querySelector("svg")) return;
       node.classList.add("diagram-error");
+      node.setAttribute("data-error-msg", L.diagramError);
     });
   }
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = {
       escHtml, safeHref, createMd, renderProseHTML, wrapTerms, renderComponent,
-      isSafeSlug, wrapWikilinks, renderRelatedRow, upgradeLinks,
+      isSafeSlug, wrapWikilinks, renderRelatedRow, upgradeLinks, setLanguage,
     };
   } else if (typeof document !== "undefined") {
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", main);

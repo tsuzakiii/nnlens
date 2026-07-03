@@ -94,6 +94,7 @@ def build() -> dict:
         "id": "layer-normalization",
         "title": "Layer Normalization",
         "kind": "technique",
+        "language": "ja",
         "summary": "各ベクトルを毎回「平均0・分散1」にならして学習を安定させ、"
         "学習可能な{{スケール}}と{{シフト}}で表現力を戻すテクニック。",
         "source": {

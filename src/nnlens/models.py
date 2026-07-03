@@ -102,6 +102,27 @@ class Explanation(BaseModel):
     id: str = Field(..., description="Stable slug for the whole explanation, used in the render URL.")
     title: str
     kind: Literal["architecture", "component", "technique"] = "component"
+    language: str = Field(
+        "ja",
+        description="Language of the prose, e.g. 'ja' or 'en'. The viewer's UI labels follow it.",
+        max_length=16,
+    )
+    ui_labels: dict[str, str] = Field(
+        default_factory=dict,
+        description="Optional chrome translations supplied by the host (keys like "
+        "'structure', 'library', 'missing', ...). Lets any language work; the "
+        "viewer falls back to built-in ja/en tables for anything omitted.",
+    )
+
+    @field_validator("ui_labels")
+    @classmethod
+    def _cap_ui_labels(cls, v: dict[str, str]) -> dict[str, str]:
+        if len(v) > 40:
+            raise ValueError("ui_labels: too many entries")
+        for key, val in v.items():
+            if len(key) > 40 or len(val) > 120:
+                raise ValueError("ui_labels: key/value too long")
+        return v
     summary: str = Field("", description="One-paragraph overview shown at the top.")
     source: Source
     components: list[Component] = Field(..., min_length=1)

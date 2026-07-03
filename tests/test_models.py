@@ -137,3 +137,21 @@ def test_slug_is_ascii_for_unicode_id():
     )
     slug = ex.slug()
     assert slug.isascii() and slug, "unicode id must yield a non-empty ASCII slug"
+
+
+def test_language_defaults_ja_and_accepts_codes():
+    assert Explanation.model_validate(_minimal_explanation()).language == "ja"
+    assert Explanation.model_validate(_minimal_explanation(language="en")).language == "en"
+    with pytest.raises(ValidationError):
+        Explanation.model_validate(_minimal_explanation(language="x" * 17))
+
+
+def test_ui_labels_accepts_dict_and_caps_size():
+    ex = Explanation.model_validate(
+        _minimal_explanation(language="fr", ui_labels={"structure": "Structure", "library": "Bibliothèque"})
+    )
+    assert ex.ui_labels["library"] == "Bibliothèque"
+    with pytest.raises(ValidationError):
+        Explanation.model_validate(_minimal_explanation(ui_labels={"k": "x" * 121}))
+    with pytest.raises(ValidationError):
+        Explanation.model_validate(_minimal_explanation(ui_labels={f"k{i}": "v" for i in range(41)}))

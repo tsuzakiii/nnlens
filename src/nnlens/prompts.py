@@ -9,7 +9,16 @@ hand the finished JSON to the ``render`` tool.
 EXPLAIN_PROMPT = """\
 You are producing a **nnlens explanation** of: **{topic}**
 
-Audience: someone learning neural networks. Write the prose in Japanese.
+Audience: someone learning neural networks. Write the prose in the language the
+user asked in (match the conversation; if unclear, use English), and set the
+top-level `language` field to its code ("ja", "en", ...). The page has built-in
+UI labels for ja/en only — **for any other language, also provide `ui_labels`**:
+your translations of the page chrome, using exactly these keys (all optional):
+`structure, words, math, naive, optimized` (view titles),
+`ledger_plain, ledger_symbol, ledger_formal, ledger_intuition` (table headers),
+`relation_contains, relation_part_of, relation_builds_on, relation_related`,
+`run_ok, run_fail, source, self_impl, library, missing, delete, delete_failed,
+confirm_delete` (use a `{{title}}` placeholder), `diagram_error, paper, repo`.
 
 # The five views (per component)
 Every component (a layer, block, or technique) is explained in FIVE linked views:
@@ -69,6 +78,8 @@ plain words stay wired to view 3's symbols.
   "id": "kebab-slug",
   "title": "…",
   "kind": "component",
+  "language": "en",
+  "ui_labels": {{ "structure": "…", "library": "…" }},
   "summary": "one paragraph",
   "source": {{ "name": "…", "paper_url": "…", "repo_url": "…" }},
   "related": [ {{ "slug": "…", "label": "…", "relation": "contains | part-of | builds-on | related" }} ],

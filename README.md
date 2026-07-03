@@ -28,13 +28,13 @@ Every component (a layer, block, or technique) is explained five ways, and the
 views are **linked** by a shared *concept ledger* so the same idea keeps the same
 everyday word, symbol, and formal name across all of them:
 
-1. **構造** — a Mermaid diagram of the data flow, plus a short note.
-2. **言葉での説明** — plain language only. No symbols, no jargon.
-3. **数式** — the real notation, carrying over the everyday words from view 2 and
+1. **Structure** — a Mermaid diagram of the data flow, plus a short note.
+2. **In plain words** — plain language only. No symbols, no jargon.
+3. **The math** — the real notation, carrying over the everyday words from view 2 and
    attaching each to its symbol (hover any highlighted word to see the mapping).
-4. **素の実装** — a from-scratch implementation that is *literally the math*
+4. **Naive implementation** — a from-scratch implementation that is *literally the math*
    (pure Python / numpy, no torch), **actually executed** so the output is real.
-5. **最適化された実装** — the fast version, excerpted from the official repository
+5. **Optimized implementation** — the fast version, excerpted from the official repository
    (with a source link) or written from scratch when none exists — numerically
    cross-checked against the naive view when it's locally runnable.
 
@@ -95,7 +95,10 @@ claude mcp add nnlens -- nnlens
 In your host, invoke the `explain` prompt (e.g. type `/nnlens` / `/explain`) or
 just ask:
 
-> nnlens で Scaled Dot-Product Attention を説明して
+> use nnlens to explain Scaled Dot-Product Attention
+
+Ask in any language — 「nnlens で RoPE を説明して」 gets you the same five views
+with Japanese prose and a Japanese UI.
 
 The host will fetch the paper/repo, write the five views, run the naive code to
 verify it, and hand you a URL like `http://127.0.0.1:8787/e/…` — open it for the

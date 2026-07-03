@@ -3,7 +3,7 @@
 **Throw in a paper, a GitHub repo, or just the name of a technique — get back a
 layer-by-layer explanation of a neural network, in five linked views.**
 
-![nnlens rendering Layer Normalization: concept ledger, related-explanation chips, and the structure diagram](docs/img/screenshot.png)
+![nnlens rendering a Transformer block: multi-component sidebar, related-explanation chips, concept ledger, and the structure diagram](docs/img/screenshot.png)
 
 nnlens is an **MCP server + local renderer**. You connect it to an MCP host you
 already use (Claude Desktop, Claude Code, Cursor, …). The host's model — driven by

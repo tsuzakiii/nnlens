@@ -17,9 +17,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from layerlens import config  # noqa: E402
-from layerlens.models import Explanation  # noqa: E402
-from layerlens.renderer import build_html, ensure_server, write_explanation  # noqa: E402
+from nnlens import config  # noqa: E402
+from nnlens.models import Explanation  # noqa: E402
+from nnlens.renderer import build_html, ensure_server, write_explanation  # noqa: E402
 
 
 def main() -> None:

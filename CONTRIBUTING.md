@@ -1,4 +1,4 @@
-# Contributing to layerlens
+# Contributing to nnlens
 
 ## Dev setup
 
@@ -8,7 +8,7 @@ py -3.12 -m venv .venv
 .venv/Scripts/python -m pytest
 ```
 
-`numpy` isn't a runtime dependency of layerlens itself — it's only needed to run
+`numpy` isn't a runtime dependency of nnlens itself — it's only needed to run
 the bundled example's naive view (view 4).
 
 The renderer JS (`viewer.js`) has its own headless test suite (Node + jsdom),
@@ -24,7 +24,7 @@ npm test        # node --test
 ## Layout
 
 ```
-src/layerlens/
+src/nnlens/
   server.py        # MCP server: tools + the `explain` prompt
   models.py        # the Explanation schema (pydantic)
   sources.py       # arXiv + GitHub retrieval (stdlib only)

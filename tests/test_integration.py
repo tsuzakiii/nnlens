@@ -14,8 +14,8 @@ def _example() -> dict:
 
 
 def test_render_tool_serves_page_and_restricts_paths(tmp_path, monkeypatch):
-    monkeypatch.setenv("LAYERLENS_STORE", str(tmp_path))
-    from layerlens import server
+    monkeypatch.setenv("NNLENS_STORE", str(tmp_path))
+    from nnlens import server
 
     result = server.render(_example())
     assert "url" in result, result
@@ -58,8 +58,8 @@ def test_render_tool_serves_page_and_restricts_paths(tmp_path, monkeypatch):
 
 
 def test_render_rejects_invalid_explanation(monkeypatch, tmp_path):
-    monkeypatch.setenv("LAYERLENS_STORE", str(tmp_path))
-    from layerlens import server
+    monkeypatch.setenv("NNLENS_STORE", str(tmp_path))
+    from nnlens import server
 
     result = server.render({"id": "x", "title": "t"})  # missing required fields
     assert result.get("error") == "validation_failed"
@@ -67,16 +67,16 @@ def test_render_rejects_invalid_explanation(monkeypatch, tmp_path):
 
 
 def test_list_library_is_a_registered_mcp_tool(monkeypatch, tmp_path):
-    monkeypatch.setenv("LAYERLENS_STORE", str(tmp_path))
-    from layerlens import server
+    monkeypatch.setenv("NNLENS_STORE", str(tmp_path))
+    from nnlens import server
 
     tool_names = {t.name for t in server.mcp._tool_manager.list_tools()}
     assert "list_library" in tool_names
 
 
 def test_list_library_reflects_rendered_explanations(monkeypatch, tmp_path):
-    monkeypatch.setenv("LAYERLENS_STORE", str(tmp_path))
-    from layerlens import server
+    monkeypatch.setenv("NNLENS_STORE", str(tmp_path))
+    from nnlens import server
 
     assert server.list_library() == {"explanations": []}
 

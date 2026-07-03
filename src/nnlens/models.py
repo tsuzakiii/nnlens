@@ -1,4 +1,4 @@
-"""Structured schema for a layerlens explanation.
+"""Structured schema for a nnlens explanation.
 
 The whole point of the five views is that they are *linked*: the plain-word view
 (view 2) and the math view (view 3) share one concept ledger, so the same idea is

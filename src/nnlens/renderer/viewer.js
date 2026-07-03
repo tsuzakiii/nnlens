@@ -1,5 +1,5 @@
 /*
- * layerlens viewer — assembles the five-view page from the embedded Explanation JSON.
+ * nnlens viewer — assembles the five-view page from the embedded Explanation JSON.
  *
  * Safety model (see the Codex review that motivated this design):
  *  - markdown-it runs with html:false, so any HTML in LLM/web-sourced prose is escaped.
@@ -52,7 +52,7 @@
     md.validateLink = (href) => {
       if (typeof href === "string" && href.charAt(0) === "#") return true;
       try {
-        const u = new URL(href, "http://layerlens.local/");
+        const u = new URL(href, "http://nnlens.local/");
         return u.protocol === "http:" || u.protocol === "https:";
       } catch (e) {
         return false;

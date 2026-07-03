@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-from layerlens.models import Explanation
-from layerlens.renderer import (
+from nnlens.models import Explanation
+from nnlens.renderer import (
     build_html,
     delete_explanation,
     rebuild_store,
@@ -21,7 +21,7 @@ def _example() -> dict:
 
 def test_build_html_embeds_data_and_libs():
     html = build_html(_example())
-    assert "__LAYERLENS_DATA__" not in html, "token must be replaced"
+    assert "__NNLENS_DATA__" not in html, "token must be replaced"
     assert "scaled-dot-product-attention" in html
     assert "mermaid" in html and "katex" in html
     # No raw </script> breakout from the embedded JSON.
@@ -93,7 +93,7 @@ def test_delete_explanation_rejects_traversal(tmp_path):
 
 def test_pages_carry_the_template_hash():
     html = build_html(_example())
-    assert f'<meta name="layerlens-template" content="{template_hash()}"' in html
+    assert f'<meta name="nnlens-template" content="{template_hash()}"' in html
 
 
 def test_rebuild_store_refreshes_legacy_pages(tmp_path):
@@ -101,7 +101,7 @@ def test_rebuild_store_refreshes_legacy_pages(tmp_path):
     path = Path(write_explanation(ex.model_dump(), str(tmp_path), ex.slug()))
     # Simulate a page rendered before hash-stamping existed (like real legacy pages).
     legacy = path.read_text(encoding="utf-8").replace(
-        f'<meta name="layerlens-template" content="{template_hash()}" />', ""
+        f'<meta name="nnlens-template" content="{template_hash()}" />', ""
     )
     path.write_text(legacy, encoding="utf-8")
 
@@ -127,7 +127,7 @@ def test_rebuild_store_skips_unparseable_pages(tmp_path):
     e_dir = tmp_path / "e"
     e_dir.mkdir()
     junk = e_dir / "junk.html"
-    junk.write_text("<!doctype html><p>not a layerlens page</p>", encoding="utf-8")
+    junk.write_text("<!doctype html><p>not a nnlens page</p>", encoding="utf-8")
     res = rebuild_store(str(tmp_path))
     assert "junk" in res["skipped"]
     assert junk.read_text(encoding="utf-8").endswith("</p>"), "file left untouched"

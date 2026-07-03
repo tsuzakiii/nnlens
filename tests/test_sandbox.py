@@ -1,4 +1,4 @@
-from layerlens.sandbox import run_python
+from nnlens.sandbox import run_python
 
 
 def test_success_captures_stdout():

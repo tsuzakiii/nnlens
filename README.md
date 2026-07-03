@@ -1,16 +1,16 @@
-# layerlens
+# nnlens
 
 **Throw in a paper, a GitHub repo, or just the name of a technique — get back a
 layer-by-layer explanation of a neural network, in five linked views.**
 
-![layerlens rendering Layer Normalization: concept ledger, related-explanation chips, and the structure diagram](docs/img/screenshot.png)
+![nnlens rendering Layer Normalization: concept ledger, related-explanation chips, and the structure diagram](docs/img/screenshot.png)
 
-layerlens is an **MCP server + local renderer**. You connect it to an MCP host you
+nnlens is an **MCP server + local renderer**. You connect it to an MCP host you
 already use (Claude Desktop, Claude Code, Cursor, …). The host's model — driven by
-**your own subscription** — does the explaining; layerlens gives it the methodology,
+**your own subscription** — does the explaining; nnlens gives it the methodology,
 fetches the real sources, runs the code, and renders the result to a local web page.
 
-> layerlens **never calls an LLM itself and never handles an API key.** The
+> nnlens **never calls an LLM itself and never handles an API key.** The
 > reasoning happens in your MCP host, on your existing plan. That is the whole
 > point: no metered API, no shared credentials, no hosted service borrowing your
 > subscription.
@@ -34,7 +34,7 @@ everyday word, symbol, and formal name across all of them:
 Beyond a single page:
 
 - **Library** — every explanation you generate is saved locally
-  (`~/.layerlens/store`) and listed in the sidebar; delete with the hover ✕.
+  (`~/.nnlens/store`) and listed in the sidebar; delete with the hover ✕.
 - **Cross-links** — explanations reference each other (`related` chips and
   `[[slug]]` wikilinks in the prose). Links to explanations you haven't generated
   yet show up greyed out — a built-in "what to explain next" list.
@@ -42,19 +42,19 @@ Beyond a single page:
   (a ledger term never marked, symbols leaking into the plain-words view, an
   uncited optimized view, an unverified naive run), so the host fixes them.
 - **Self-healing pages** — pages are stamped with a template hash and rebuilt
-  automatically when layerlens updates its renderer.
+  automatically when nnlens updates its renderer.
 
 ## Install
 
 ```bash
-pip install layerlens        # or: pipx install layerlens
+pip install nnlens        # or: pipx install nnlens
 ```
 
 Or from source:
 
 ```bash
-git clone https://github.com/<you>/layerlens
-cd layerlens
+git clone https://github.com/<you>/nnlens
+cd nnlens
 pip install -e .
 ```
 
@@ -65,7 +65,7 @@ pip install -e .
 ```json
 {
   "mcpServers": {
-    "layerlens": { "command": "layerlens" }
+    "nnlens": { "command": "nnlens" }
   }
 }
 ```
@@ -73,18 +73,18 @@ pip install -e .
 **Claude Code**:
 
 ```bash
-claude mcp add layerlens -- layerlens
+claude mcp add nnlens -- nnlens
 ```
 
-(If the `layerlens` script isn't on your PATH, use
-`"command": "python", "args": ["-m", "layerlens"]` instead.)
+(If the `nnlens` script isn't on your PATH, use
+`"command": "python", "args": ["-m", "nnlens"]` instead.)
 
 ## Use it
 
-In your host, invoke the `explain` prompt (e.g. type `/layerlens` / `/explain`) or
+In your host, invoke the `explain` prompt (e.g. type `/nnlens` / `/explain`) or
 just ask:
 
-> layerlens で Scaled Dot-Product Attention を説明して
+> nnlens で Scaled Dot-Product Attention を説明して
 
 The host will fetch the paper/repo, write the five views, run the naive code to
 verify it, and hand you a URL like `http://127.0.0.1:8787/e/…` — open it for the
@@ -100,7 +100,7 @@ python scripts/demo_render.py --open
 ## How it fits together
 
 ```
-MCP host (your subscription) ── drives ──► layerlens tools
+MCP host (your subscription) ── drives ──► nnlens tools
         │                                    ├─ fetch_paper / find_official_repo / fetch_repo_code
         │  writes the 5 views                ├─ run_python   (proves view 4 runs)
         └───────────────────────────────────► render        (→ local web page URL)

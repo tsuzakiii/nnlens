@@ -1,4 +1,4 @@
-from layerlens.prompts import EXPLAIN_PROMPT
+from nnlens.prompts import EXPLAIN_PROMPT
 
 
 def test_explain_prompt_formats_without_error():

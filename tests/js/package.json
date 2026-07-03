@@ -1,8 +1,8 @@
 {
-  "name": "layerlens-viewer-tests",
+  "name": "nnlens-viewer-tests",
   "private": true,
   "version": "0.0.0",
-  "description": "Headless tests for the layerlens viewer JS (renderProse / wrapTerms / safeHref).",
+  "description": "Headless tests for the nnlens viewer JS (renderProse / wrapTerms / safeHref).",
   "type": "commonjs",
   "scripts": {
     "test": "node --test"

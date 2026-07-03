@@ -13,7 +13,7 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 
-_UA = {"User-Agent": "layerlens/0.1 (+https://github.com/; educational explainer)"}
+_UA = {"User-Agent": "nnlens/0.1 (+https://github.com/; educational explainer)"}
 _TIMEOUT = 20
 _ATOM = "{http://www.w3.org/2005/Atom}"
 

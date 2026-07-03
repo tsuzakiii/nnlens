@@ -1,6 +1,6 @@
 # 設計書: 解説間リンク（related / wikilink）
 
-日付: 2026-07-02 / 対象: layerlens v0.1 / 状態: 実装待ち
+日付: 2026-07-02 / 対象: nnlens v0.1 / 状態: 実装待ち
 
 ## 目的
 
@@ -9,7 +9,7 @@
 
 ## 変更一覧（この5点で完結。スコープ外のことはしない）
 
-### 1. スキーマ (`src/layerlens/models.py`)
+### 1. スキーマ (`src/nnlens/models.py`)
 
 `Explanation` に追加:
 
@@ -27,7 +27,7 @@ class Explanation(BaseModel):
 - `slug` は `Explanation.slug()` と同じ safe 形式を期待するが、**バリデーションで弾かない**（正規化は不要、レンダラー側で存在チェックするため）。ただし `/` `\` `..` を含むものは pydantic validator で reject する（リンク先パスに使うため）。
 - 既存 JSON（related 無し）は default `[]` で後方互換。
 
-### 2. MCP ツール追加 (`src/layerlens/server.py`)
+### 2. MCP ツール追加 (`src/nnlens/server.py`)
 
 ```python
 @mcp.tool()
@@ -37,9 +37,9 @@ def list_library() -> dict:
 ```
 
 - ホストが**既存の解説の slug を知ってから** related / wikilink を張れるようにするのが目的。
-- `reconcile_index` は `layerlens.renderer` から import（既存関数、ディスク走査つき）。
+- `reconcile_index` は `nnlens.renderer` から import（既存関数、ディスク走査つき）。
 
-### 3. プロンプト (`src/layerlens/prompts.py`)
+### 3. プロンプト (`src/nnlens/prompts.py`)
 
 `EXPLAIN_PROMPT` に追記（How to work セクションと JSON shape の両方）:
 
@@ -47,7 +47,7 @@ def list_library() -> dict:
 - JSON shape 例に `"related": [{ "slug": "…", "label": "…", "relation": "contains | part-of | builds-on | related" }]` を追加。
 - 注意: このファイルは `.format(topic=...)` を使うので **literal な `{` `}` は `{{` `}}` にエスケープ**する（既存コード参照）。
 
-### 4. レンダラー (`src/layerlens/renderer/viewer.js` + `template.html` の CSS)
+### 4. レンダラー (`src/nnlens/renderer/viewer.js` + `template.html` の CSS)
 
 #### 4a. 関連チップ（ヘッダー直下）
 
@@ -90,7 +90,7 @@ def list_library() -> dict:
 ## 受け入れ条件
 
 1. `pytest`（venv: `.venv/Scripts/python.exe -m pytest -q`）と `cd tests/js && node --test` が全 green。
-2. `scripts/build_example.py` → `scripts/build_layernorm.py` を実行し直すと、attention / layer_norm のページ双方のヘッダーに相互の「関連」チップが出て、クリックで行き来できる（store: `~/.layerlens/store`、サーバー再起動が必要なら 8787 の既存プロセスを止めてから `scripts/demo_render.py` を background で）。
+2. `scripts/build_example.py` → `scripts/build_layernorm.py` を実行し直すと、attention / layer_norm のページ双方のヘッダーに相互の「関連」チップが出て、クリックで行き来できる（store: `~/.nnlens/store`、サーバー再起動が必要なら 8787 の既存プロセスを止めてから `scripts/demo_render.py` を background で）。
 3. 存在しない slug への related / wikilink はグレー表示（リンク化されない）で、ページは壊れない。
 4. XSS 安全: すべて createElement / textContent。`innerHTML` への注入を新規に増やさない。
 

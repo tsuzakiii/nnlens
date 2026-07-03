@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from layerlens.models import Explanation, RelatedRef
+from nnlens.models import Explanation, RelatedRef
 
 ROOT = Path(__file__).resolve().parents[1]
 

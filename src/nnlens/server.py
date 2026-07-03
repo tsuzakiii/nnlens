@@ -1,4 +1,4 @@
-"""The layerlens MCP server.
+"""The nnlens MCP server.
 
 The host LLM (the user's own Claude/Codex/Cursor subscription) drives these tools;
 the server never calls an LLM itself. Tools cover the deterministic work — fetching
@@ -17,7 +17,7 @@ from .prompts import EXPLAIN_PROMPT
 from .renderer import ensure_server, reconcile_index, update_index, write_explanation
 from .sandbox import run_python as _run_python
 
-mcp = FastMCP("layerlens")
+mcp = FastMCP("nnlens")
 
 
 # --- retrieval -------------------------------------------------------------
@@ -61,7 +61,7 @@ def run_python(code: str, timeout: float = 15.0) -> dict:
 def render(explanation: dict) -> dict:
     """Validate a full Explanation object, render it to a local web page, and return its URL.
 
-    ``explanation`` must match the layerlens Explanation schema (see the ``explain``
+    ``explanation`` must match the nnlens Explanation schema (see the ``explain``
     prompt). On success returns ``{"url", "path", "components"}``; on a schema error
     returns ``{"error", "detail"}`` so the host can fix and retry.
     """
@@ -106,7 +106,7 @@ def list_library() -> dict:
 
 @mcp.prompt()
 def explain(topic: str) -> str:
-    """Produce a five-view layerlens explanation of a neural-network topic."""
+    """Produce a five-view nnlens explanation of a neural-network topic."""
     return EXPLAIN_PROMPT.format(topic=topic)
 
 

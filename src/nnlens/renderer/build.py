@@ -14,13 +14,13 @@ from ..models import Explanation
 
 _TEMPLATE = Path(__file__).with_name("template.html")
 _VIEWER = Path(__file__).with_name("viewer.js")
-_DATA_TOKEN = "__LAYERLENS_DATA__"
-_JS_TOKEN = "__LAYERLENS_JS__"
-_TPL_TOKEN = "__LAYERLENS_TPLHASH__"
+_DATA_TOKEN = "__NNLENS_DATA__"
+_JS_TOKEN = "__NNLENS_JS__"
+_TPL_TOKEN = "__NNLENS_TPLHASH__"
 
 _index_lock = threading.Lock()
 _DATA_RE = re.compile(r'<script type="application/json" id="data">(.*?)</script>', re.S)
-_TPLHASH_RE = re.compile(r'<meta name="layerlens-template" content="([0-9a-f]+)"')
+_TPLHASH_RE = re.compile(r'<meta name="nnlens-template" content="([0-9a-f]+)"')
 
 
 def template_hash() -> str:
@@ -56,7 +56,7 @@ def write_explanation(explanation: dict, store_dir: str, slug: str) -> str:
     # temp + os.replace so a concurrent reader (another process serving the same
     # store) never sees a truncated page. Fixed short prefix: deriving it from the
     # slug could push a valid filename past Windows path limits.
-    fd, tmp = tempfile.mkstemp(dir=out_dir, prefix=".layerlens-", suffix=".tmp")
+    fd, tmp = tempfile.mkstemp(dir=out_dir, prefix=".nnlens-", suffix=".tmp")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             fh.write(build_html(explanation))
@@ -126,7 +126,7 @@ def _replace_if_unchanged(path: str, mtime_ns: int, content: str) -> bool:
     mtime moved. (A narrow stat->replace window remains — acceptable, since a lost
     rebuild self-heals on the next server start.)
     """
-    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".layerlens-", suffix=".tmp")
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".nnlens-", suffix=".tmp")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             fh.write(content)

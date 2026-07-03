@@ -34,7 +34,7 @@ STDERR_CAP = 4000
 def _python_interpreter() -> str:
     """Return a real Python interpreter to run snippets with.
 
-    When layerlens is launched via its console-script wrapper (``layerlens.exe``),
+    When nnlens is launched via its console-script wrapper (``nnlens.exe``),
     ``sys.executable`` is that wrapper, NOT an interpreter — running ``[sys.executable,
     snippet]`` would re-launch the MCP server (which hangs on stdio) and every snippet
     would "time out". So if ``sys.executable`` isn't a python binary, recover the real
@@ -93,13 +93,13 @@ def _kill_tree(proc: subprocess.Popen) -> None:
 
 def run_python(code: str, timeout: float = 15.0) -> dict:
     """Execute ``code`` with the current interpreter, returning a result dict."""
-    with tempfile.TemporaryDirectory(prefix="layerlens-") as d:
+    with tempfile.TemporaryDirectory(prefix="nnlens-") as d:
         path = os.path.join(d, "snippet.py")
         with open(path, "w", encoding="utf-8") as fh:
             fh.write(code)
 
         kwargs: dict = dict(
-            stdin=subprocess.DEVNULL,  # never inherit the parent's stdin: when layerlens
+            stdin=subprocess.DEVNULL,  # never inherit the parent's stdin: when nnlens
             # runs over an MCP stdio pipe, an inherited pipe stdin deadlocks the child on
             # Windows (even trivial `print(2+2)` would "time out"). Snippets don't read stdin.
             stdout=subprocess.PIPE,

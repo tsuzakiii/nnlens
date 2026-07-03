@@ -1,6 +1,12 @@
-# layerlens — progress / task board
+# nnlens — progress / task board
 
-Working name: **layerlens** (changeable). Goal: MCP server + local renderer that
+## Done (2026-07-03) — renamed layerlens → (layerlore) → nnlens
+- [x] "layerlens" was taken (PyPI 200; a "LayerLens" GitHub org with a 276★ repo). Interim pick "layerlore" was applied and working, then the user weighed in; final name **nnlens** — verified completely clean (PyPI 404, GitHub 0 repos, the cleanest of all candidates).
+- [x] Renamed package / console script / MCP server name / env vars (NNLENS_STORE, NNLENS_PORT) / branding; repo folder moved to C:\ClaudeCode\nnlens; fresh venv.
+- [x] Store auto-migration on first use: `~/.layerlore/store` or `~/.layerlens/store` → `~/.nnlens/store` (all 4 explanations carried over). Old pages auto-rebuilt under the new branding by the template-hash rebuilder.
+- [x] Re-registered in Claude Code (user scope) and Claude Desktop config (backups kept). Desktop needs a restart to pick it up.
+
+Working name: **nnlens** (final). Goal: MCP server + local renderer that
 explains NN components in five linked views, driven by the user's own LLM
 subscription (host does inference; server = tools + methodology + renderer).
 
@@ -48,8 +54,8 @@ subscription (host does inference; server = tools + methodology + renderer).
 
 ## Needs the user / external (can't do autonomously)
 - [ ] Browser *visual* of mermaid/katex: browser-scenario profile stayed locked all session. Logic verified headlessly; retry when it frees.
-- [ ] End-to-end host-driven run: needs the user's own MCP host (Claude Desktop / Claude Code) — add layerlens, run /explain, confirm the round-trip.
-- [ ] Naming + PyPI availability before publishing ("layerlens" is a working name).
+- [ ] End-to-end host-driven run: needs the user's own MCP host (Claude Desktop / Claude Code) — add nnlens, run /explain, confirm the round-trip.
+- [ ] Naming + PyPI availability before publishing ("nnlens" is a working name).
 - [ ] Open design Q: Codex-as-MCP-client support for ChatGPT-sub users (Claude hosts are solid).
 
 ## Done (this session, cont. 4) — real-usage feedback + visual polish
@@ -66,7 +72,7 @@ subscription (host does inference; server = tools + methodology + renderer).
 - [x] Verified in-browser: attention↔layer-norm mutual chips click through both ways.
 
 ## Done (2026-07-02, cont.) — template updates now reach old pages
-- [x] Pages are stamped with a template hash (`<meta name="layerlens-template">`; sha1 of template.html+viewer.js).
+- [x] Pages are stamped with a template hash (`<meta name="nnlens-template">`; sha1 of template.html+viewer.js).
 - [x] `rebuild_store`: pages whose stamp differs (or is missing = legacy) are re-rendered losslessly from their embedded Explanation JSON; unparseable pages skipped untouched. Runs automatically at `ensure_server` startup.
 - [x] Proven on the real store: the PRISM page (stuck on the old max-width:900px CSS) auto-upgraded to the current layout + wikilink viewer on server restart.
 - [x] `write_explanation` atomic (temp+os.replace). Codex review #5 (2 findings, fixed): renders win over rebuilds via mtime guard (`_replace_if_unchanged`), fixed short temp prefix (Windows path limits), per-page failure isolation, rebuild/reconcile guarded separately at startup.
@@ -90,4 +96,4 @@ subscription (host does inference; server = tools + methodology + renderer).
 - [ ] Architecture decomposition example (full Transformer block → attention/FFN/norm/residual).
 - [ ] Optional: offline/vendored CDN assets for the renderer.
 - [ ] Optional: `run_python` hardening (no-network mode).
-- [ ] **Naming: `layerlens` is TAKEN** (PyPI 200; GitHub has a LayerLens org, 276★ repo). Must rename before publishing. Checked AVAILABLE on PyPI (2026-07-02): layerscope, nnlens, layerwise-explain, explayn, layerlore, fivelens. → user's pick.
+- [x] **Naming: RENAMED to `nnlens`** (2026-07-03, user delegated the pick). The original name "layerlens" was taken (PyPI 200; a "LayerLens" GitHub org with a 276★ repo). `nnlens` verified free on PyPI (404) and GitHub (0 repos) at rename time. Other free candidates at the time: layerscope, nnlens, explayn, fivelens.

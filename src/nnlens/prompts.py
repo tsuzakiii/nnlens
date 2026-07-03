@@ -1,13 +1,13 @@
 """The ``/explain`` prompt: the methodology the host LLM follows.
 
-This is the heart of layerlens as an MCP server. The server owns the *hard,
+This is the heart of nnlens as an MCP server. The server owns the *hard,
 deterministic* parts (fetching sources, running code, rendering); this prompt tells
 the host how to assemble the five linked views and thread the concept ledger, then
 hand the finished JSON to the ``render`` tool.
 """
 
 EXPLAIN_PROMPT = """\
-You are producing a **layerlens explanation** of: **{topic}**
+You are producing a **nnlens explanation** of: **{topic}**
 
 Audience: someone learning neural networks. Write the prose in Japanese.
 

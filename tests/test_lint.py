@@ -2,8 +2,8 @@ import copy
 import json
 from pathlib import Path
 
-from layerlens.lint import lint_explanation
-from layerlens.models import Explanation
+from nnlens.lint import lint_explanation
+from nnlens.models import Explanation
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -146,8 +146,8 @@ def test_summary_mark_without_any_ledger_is_flagged():
 
 
 def test_render_tool_returns_warnings(monkeypatch, tmp_path):
-    monkeypatch.setenv("LAYERLENS_STORE", str(tmp_path))
-    from layerlens import server
+    monkeypatch.setenv("NNLENS_STORE", str(tmp_path))
+    from nnlens import server
 
     bad = copy.deepcopy(_clean())
     bad["components"][0]["naive"] = {"code": "print(1)"}  # unverified

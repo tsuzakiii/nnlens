@@ -12,7 +12,7 @@ const markdownit = require("markdown-it");
 const texmath = require("markdown-it-texmath");
 const katex = require("katex");
 
-const viewer = require(path.resolve(__dirname, "../../src/layerlens/renderer/viewer.js"));
+const viewer = require(path.resolve(__dirname, "../../src/nnlens/renderer/viewer.js"));
 const md = viewer.createMd({ markdownit, texmath, katex });
 
 test("renders markdown but escapes raw HTML (no XSS from prose)", () => {

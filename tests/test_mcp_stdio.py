@@ -1,6 +1,6 @@
 """End-to-end regression test over a real MCP stdio connection.
 
-This reproduces the exact context that broke `run_python`: when layerlens runs
+This reproduces the exact context that broke `run_python`: when nnlens runs
 behind an MCP stdio pipe, a spawned child that inherits the parent's (pipe) stdin
 deadlocked on Windows, so even `print(2+2)` "timed out". A normal pytest run has a
 console/devnull stdin and does NOT reproduce it — only launching the server over
@@ -19,7 +19,7 @@ from mcp.client.stdio import stdio_client  # noqa: E402
 
 
 async def _call_run_python() -> dict:
-    params = StdioServerParameters(command=sys.executable, args=["-m", "layerlens"])
+    params = StdioServerParameters(command=sys.executable, args=["-m", "nnlens"])
     async with stdio_client(params) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()

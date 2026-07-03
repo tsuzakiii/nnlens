@@ -8,8 +8,8 @@ dist/
 .venv/
 venv/
 
-# layerlens local render store
-.layerlens/
+# nnlens local render store
+.nnlens/
 *.rendered.html
 
 # OS / editor

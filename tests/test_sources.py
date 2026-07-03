@@ -2,8 +2,8 @@
 
 import pytest
 
-from layerlens import sources
-from layerlens.sources import _extract_arxiv_id
+from nnlens import sources
+from nnlens.sources import _extract_arxiv_id
 
 
 def test_extract_arxiv_id_variants():

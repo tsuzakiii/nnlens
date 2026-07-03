@@ -1,6 +1,6 @@
 [project]
 name = "nnlens"
-version = "0.1.2"
+version = "0.2.0"
 description = "Explain neural-network architectures layer by layer in five linked views (structure, plain words, math, naive code, optimized code). An MCP server + local renderer driven by your own LLM subscription."
 readme = "README.md"
 requires-python = ">=3.10"
